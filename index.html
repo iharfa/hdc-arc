@@ -197,14 +197,16 @@ function ord(place) {
 
 // ---- confetti (hand-rolled, ~30 lines, no dependency) ----
 let confettiFired = false;
-function fireConfetti() {
+let miniConfettiAt = null;
+let firstRender = true;
+function fireConfetti(count) {
   const c = document.createElement('canvas');
   c.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:999;';
   document.body.appendChild(c);
   c.width = innerWidth; c.height = innerHeight;
   const ctx = c.getContext('2d');
   const COLORS = ['#2fa84f', '#7ad98f', '#4fc06a', '#ffb54d', '#ffffff'];
-  const parts = Array.from({ length: 220 }, () => ({
+  const parts = Array.from({ length: count || 220 }, () => ({
     x: Math.random() * c.width, y: -30 - Math.random() * c.height * 0.6,
     w: 6 + Math.random() * 8, h: 4 + Math.random() * 6,
     vx: -1.5 + Math.random() * 3, vy: 2.5 + Math.random() * 3.5,
@@ -510,6 +512,13 @@ function render() {
   const championRevealed = d.S.phase === 'final' && (d.S.revealCount || 0) >= tiersBottomUp(ranked(d)).length;
   if (championRevealed && !confettiFired && view !== 'home') { confettiFired = true; fireConfetti(); }
   if (!championRevealed) confettiFired = false;
+  // mini burst when a reveal shows at least one team got it right
+  if (firstRender) { firstRender = false; if (d.S.phase === 'question' && d.revealed) miniConfettiAt = d.S.qIndex; }
+  const someCorrect = d.names.some((_, i) => d.answers[i] === d.correctLetter);
+  if (view !== 'home' && d.S.phase === 'question' && d.revealed && someCorrect && miniConfettiAt !== d.S.qIndex) {
+    miniConfettiAt = d.S.qIndex; fireConfetti(70);
+  }
+  if (d.S.phase === 'question' && !d.revealed && miniConfettiAt === d.S.qIndex) miniConfettiAt = null;
 }
 
 // ponytail: 300ms tick patches only the timer text/ring in place; full render only when the clock hits 0 (to show "Time's up")
