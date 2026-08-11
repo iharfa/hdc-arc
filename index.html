@@ -186,7 +186,8 @@ function backToQuestion() { setShared({ phase: 'question' }); }
 function doFinal() { setShared({ phase: 'final', revealCount: 0 }); }
 function revealNext() {
   const d = derive();
-  setShared({ revealCount: Math.min(d.teamCount, (d.S.revealCount || 0) + 1) });
+  const tierCount = tiersBottomUp(ranked(d)).length;
+  setShared({ revealCount: Math.min(tierCount, (d.S.revealCount || 0) + 1) });
 }
 function doReset() { if (confirm('Reset the whole game?')) setShared(freshShared()); }
 
@@ -225,12 +226,20 @@ function fireConfetti() {
 
 // ---- views ----
 function ranked(d) {
-  return d.names.map((name, i) => ({ name, score: d.scores[i] }))
-    .sort((a, b) => b.score - a.score)
-    .map((t, i) => ({
-      rank: i + 1, name: t.name, score: t.score,
-      barPct: Math.max(6, (t.score / Math.max(1, Math.max.apply(null, d.scores))) * 100) + '%'
-    }));
+  const rows = d.names.map((name, i) => ({ name, score: d.scores[i], i }))
+    .sort((a, b) => b.score - a.score);
+  let rank = 1;
+  rows.forEach((r, idx) => {
+    if (idx > 0 && r.score < rows[idx - 1].score) rank = idx + 1; // competition ranking: ties share, next skips
+    r.rank = rank;
+    r.barPct = Math.max(6, (r.score / Math.max(1, Math.max.apply(null, d.scores))) * 100) + '%';
+  });
+  return rows;
+}
+// distinct ranks worst-first: the podium reveal order (a tied group reveals as one step)
+function tiersBottomUp(rows) {
+  const t = []; rows.forEach(r => { if (!t.includes(r.rank)) t.push(r.rank); });
+  return t.reverse();
 }
 
 function homeView() {
@@ -327,9 +336,11 @@ function displayView(d) {
   } else if (S.phase === 'final') {
     const rc = S.revealCount || 0;
     const rows = ranked(d);
-    const champion = rc >= d.teamCount;
+    const tiers = tiersBottomUp(rows);
+    const champion = rc >= tiers.length;
+    const winners = rows.filter(r => r.rank === 1);
     const podium = rows.map(r => {
-      const shown = r.rank > d.teamCount - rc;
+      const shown = tiers.indexOf(r.rank) < rc;
       const isChamp = r.rank === 1 && shown;
       if (!shown) return `
       <div style="display: flex; align-items: center; gap: 18px; opacity: 0.45;">
@@ -351,8 +362,8 @@ function displayView(d) {
     body = `
     <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 26px; max-width: 900px; width: 100%; margin: 0 auto;">
       <div style="text-align: center;">
-        <div style="font-size: 18px; font-weight: 700; letter-spacing: 4px; color: #4fc06a; text-transform: uppercase;">${champion ? 'Champions' : 'Final Results'}</div>
-        ${champion ? `<div style="font-size: clamp(40px, 6vw, 80px); font-weight: 900; line-height: 1.1; animation: popin 0.6s ease;">🎉&#xFE0E; ${esc(rows[0].name)}</div>` : `<div style="font-size: clamp(30px, 4.5vw, 56px); font-weight: 900;">The moment of truth…</div>`}
+        <div style="font-size: 18px; font-weight: 700; letter-spacing: 4px; color: #4fc06a; text-transform: uppercase;">${champion ? (winners.length > 1 ? 'Joint Champions' : 'Champions') : 'Final Results'}</div>
+        ${champion ? `<div style="font-size: clamp(40px, 6vw, 80px); font-weight: 900; line-height: 1.1; animation: popin 0.6s ease;">🎉&#xFE0E; ${winners.map(w => esc(w.name)).join(' & ')}</div>` : `<div style="font-size: clamp(30px, 4.5vw, 56px); font-weight: 900;">The moment of truth…</div>`}
       </div>
       <div style="display: flex; flex-direction: column; gap: 14px;">${podium}</div>
     </div>`;
@@ -441,13 +452,13 @@ function adminView(d) {
       <button onclick="doFinal()" style="grid-column: span 2; border: 2px solid #ffb54d; background: transparent; color: #ffb54d; font-size: 15px; font-weight: 800; padding: 13px; border-radius: 14px;">🎉&#xFE0E; End Game — Podium Reveal</button>
     </div>`;
   } else if (S.phase === 'scoreboard') {
-    const rows = d.names.map((name, i) => ({ name, score: d.scores[i], i })).sort((a, b) => b.score - a.score);
+    const rows = ranked(d);
     body = `
     <div style="background: #142519; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 10px;">
       <div style="font-size: 13px; font-weight: 700; color: #8fa898; text-transform: uppercase; letter-spacing: 1px;">Scores · use − / + to correct</div>
-      ${rows.map((r, rank) => `
+      ${rows.map(r => `
       <div style="display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 16px;">
-        <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rank + 1}. ${esc(r.name)}</span>
+        <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${r.rank}. ${esc(r.name)}</span>
         <button onclick="adjustScore(${r.i}, -50)" style="width: 36px; height: 36px; border-radius: 10px; border: 2px solid #245133; background: transparent; color: #e07a5f; font-size: 17px; font-weight: 900;">−</button>
         <span style="width: 52px; text-align: center; color: #4fc06a;">${r.score}</span>
         <button onclick="adjustScore(${r.i}, 50)" style="width: 36px; height: 36px; border-radius: 10px; border: 2px solid #245133; background: transparent; color: #7ad98f; font-size: 17px; font-weight: 900;">+</button>
@@ -458,19 +469,23 @@ function adminView(d) {
   } else if (S.phase === 'final') {
     const rc = S.revealCount || 0;
     const rows = ranked(d);
-    if (rc < d.teamCount) {
-      const nextPlace = d.teamCount - rc;
-      const revealedList = rows.filter(r => r.rank > nextPlace).map(r =>
+    const tiers = tiersBottomUp(rows);
+    const winners = rows.filter(r => r.rank === 1);
+    if (rc < tiers.length) {
+      const nextTier = tiers[rc];
+      const nextIsChamp = nextTier === 1;
+      const tieCount = rows.filter(r => r.rank === nextTier).length;
+      const revealedList = rows.filter(r => tiers.indexOf(r.rank) < rc).map(r =>
         `<div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 15px;"><span>${r.rank}. ${esc(r.name)}</span><span style="color: #4fc06a;">${r.score}</span></div>`).join('');
       body = `
       <div style="background: #142519; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 8px;">
         <div style="font-size: 13px; font-weight: 700; color: #8fa898; text-transform: uppercase; letter-spacing: 1px;">Podium reveal — bottom to top</div>
         ${revealedList || '<div style="font-size: 14px; color: #5c7263;">Nothing revealed yet. Build the suspense…</div>'}
       </div>
-      <button onclick="revealNext()" class="btn-primary" style="font-size: 19px; padding: 18px; box-shadow: 0 6px 0 #1c6f34; ${nextPlace === 1 ? 'background: #ffb54d; color: #0c1810; box-shadow: 0 6px 0 #8a5c1a;' : ''}">${nextPlace === 1 ? '🏆&#xFE0E; Reveal the Champion!' : '👁&#xFE0E; Reveal ' + ord(nextPlace)}</button>
+      <button onclick="revealNext()" class="btn-primary" style="font-size: 19px; padding: 18px; box-shadow: 0 6px 0 #1c6f34; ${nextIsChamp ? 'background: #ffb54d; color: #0c1810; box-shadow: 0 6px 0 #8a5c1a;' : ''}">${nextIsChamp ? '🏆&#xFE0E; Reveal the Champion' + (tieCount > 1 ? 's' : '') + '!' : '👁&#xFE0E; Reveal ' + ord(nextTier) + (tieCount > 1 ? ' (tie)' : '')}</button>
       <button onclick="doScoreboard()" style="border: 2px solid #245133; background: transparent; color: #b7cbbd; font-size: 14px; font-weight: 800; padding: 12px; border-radius: 14px;">◂ Back to Scoreboard</button>`;
     } else {
-      body = `<div style="background: #142519; border-radius: 16px; padding: 20px; text-align: center; font-size: 18px; font-weight: 800;">🎉&#xFE0E; ${esc(rows[0].name)} wins with ${rows[0].score} pts</div>`;
+      body = `<div style="background: #142519; border-radius: 16px; padding: 20px; text-align: center; font-size: 18px; font-weight: 800;">🎉&#xFE0E; ${winners.map(w => esc(w.name)).join(' & ')} ${winners.length > 1 ? 'share the win' : 'wins'} with ${winners[0].score} pts</div>`;
     }
   }
   return `
@@ -492,7 +507,7 @@ function render() {
   const view = hashView();
   document.getElementById('app').innerHTML =
     view === 'display' ? displayView(d) : view === 'admin' ? adminView(d) : homeView();
-  const championRevealed = d.S.phase === 'final' && (d.S.revealCount || 0) >= d.teamCount;
+  const championRevealed = d.S.phase === 'final' && (d.S.revealCount || 0) >= tiersBottomUp(ranked(d)).length;
   if (championRevealed && !confettiFired && view !== 'home') { confettiFired = true; fireConfetti(); }
   if (!championRevealed) confettiFired = false;
 }
