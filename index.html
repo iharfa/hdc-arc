@@ -40,10 +40,53 @@ function freshShared() {
 const bc = new BroadcastChannel('hdc-trivia');
 bc.onmessage = (e) => { shared = e.data; render(); };
 
+// ---- cross-device room sync (host pushes, big screen polls) ----
+let room = (new URLSearchParams(location.search).get('room') || localStorage.getItem('hdc-room') || '').toUpperCase();
+if (room) localStorage.setItem('hdc-room', room);
+
+function setRoom(code) {
+  room = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  localStorage.setItem('hdc-room', room);
+  render();
+}
+function ensureRoom() {
+  if (room) return;
+  // ponytail: 4 chars from an unambiguous alphabet; collisions fine at event scale
+  const AB = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  let c = '';
+  for (let i = 0; i < 4; i++) c += AB[Math.floor(Math.random() * AB.length)];
+  room = c;
+  localStorage.setItem('hdc-room', room);
+  pushRoom();
+}
+
+let pushT;
+function pushRoom() {
+  if (!room || room === 'LOCAL') return;
+  clearTimeout(pushT);
+  pushT = setTimeout(() => {
+    fetch('/api/room?code=' + room, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(shared)
+    }).catch(() => {});
+  }, 200);
+}
+
+let polling = false;
+setInterval(async () => {
+  if (hashView() !== 'display' || !room || room === 'LOCAL' || polling) return;
+  polling = true;
+  try {
+    const s = await fetch('/api/room?code=' + room).then(r => r.json());
+    if (s && s.phase && JSON.stringify(s) !== JSON.stringify(shared)) { shared = s; render(); }
+  } catch (e) {}
+  polling = false;
+}, 1500);
+
 function setShared(patch, rerender) {
   shared = Object.assign({}, shared, patch);
   localStorage.setItem(KEY, JSON.stringify(shared));
   bc.postMessage(shared);
+  pushRoom();
   if (rerender !== false) render();
 }
 
@@ -144,12 +187,25 @@ function homeView() {
       <button onclick="goDisplay()" style="border: none; background: #2fa84f; color: #ffffff; font-size: 22px; font-weight: 800; padding: 22px 44px; border-radius: 18px; box-shadow: 0 8px 0 #1c6f34;">🖥&#xFE0E; Big Screen</button>
       <button onclick="goAdmin()" style="border: 3px solid #2fa84f; background: transparent; color: #7ad98f; font-size: 22px; font-weight: 800; padding: 22px 44px; border-radius: 18px;">📱&#xFE0E; Host Controls</button>
     </div>
-    <div style="font-size: 14px; color: #8fa898; max-width: 420px;">Open <b>Big Screen</b> on the projector PC and <b>Host Controls</b> in another tab or window on the same computer — they stay in sync.</div>
+    <div style="font-size: 14px; color: #8fa898; max-width: 420px;">Open <b>Big Screen</b> on the projector and <b>Host Controls</b> on your phone or laptop — any device, anywhere. Host Controls shows a 4-letter room code; enter it on the Big Screen to link them.</div>
   </div>`;
 }
 
 function displayView(d) {
   const S = d.S;
+  if (!room) {
+    return `
+    <div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 32px; text-align: center;">
+      <div style="background: #ffffff; border-radius: 16px; padding: 14px 24px;"><img src="./logo.png" alt="HDC" style="width: 220px; max-width: 60vw; display: block;"></div>
+      <div style="font-size: clamp(30px, 4vw, 48px); font-weight: 900;">Link this Big Screen</div>
+      <div style="font-size: 17px; color: #b7cbbd; max-width: 460px;">Enter the 4-letter room code shown at the top of <b>Host Controls</b></div>
+      <form onsubmit="event.preventDefault(); setRoom(this.code.value)" style="display: flex; gap: 12px;">
+        <input name="code" maxlength="8" autofocus autocomplete="off" placeholder="CODE" style="background: #142519; border: 3px solid #245133; border-radius: 14px; color: #f1f7f2; font-size: 30px; font-weight: 900; letter-spacing: 8px; padding: 14px 18px; width: 220px; text-align: center; text-transform: uppercase;">
+        <button type="submit" class="btn-primary" style="font-size: 20px; padding: 14px 28px;">Link</button>
+      </form>
+      <div style="font-size: 13px; color: #5c7263;">Running host and screen on the same computer? They sync automatically — <a href="#" onclick="event.preventDefault(); setRoom('LOCAL')" style="color: #4fc06a;">skip this</a>.</div>
+    </div>`;
+  }
   let body = '';
   if (S.phase === 'lobby') {
     body = `
@@ -231,6 +287,7 @@ function displayView(d) {
       <div style="display: flex; align-items: center; gap: 14px;">
         <div style="background: #ffffff; border-radius: 10px; padding: 6px 10px;"><img src="./logo.png" alt="HDC" style="height: 30px; display: block;"></div>
         <div style="font-weight: 700; letter-spacing: 2px; font-size: 13px; color: #8fa898; text-transform: uppercase;">Planning Division · Trivia Challenge</div>
+        <div onclick="setRoom('')" title="Click to link a different room" style="cursor: pointer; font-size: 12px; font-weight: 800; color: #4fc06a; background: rgba(47,168,79,0.15); border-radius: 999px; padding: 5px 12px; letter-spacing: 2px;">${room === 'LOCAL' ? 'THIS DEVICE' : 'ROOM ' + room}</div>
       </div>
       ${topTimer}
     </div>
@@ -239,6 +296,7 @@ function displayView(d) {
 }
 
 function adminView(d) {
+  ensureRoom();
   const S = d.S;
   const phaseLabels = { lobby: 'Lobby', question: 'In Question', scoreboard: 'Scoreboard', final: 'Finished' };
   let body = '';
@@ -312,7 +370,10 @@ function adminView(d) {
   <div style="min-height: 100vh; max-width: 480px; margin: 0 auto; padding: 20px 16px 40px; display: flex; flex-direction: column; gap: 16px;">
     <div style="display: flex; align-items: center; justify-content: space-between;">
       <div style="font-size: 18px; font-weight: 900;">🎛&#xFE0E; Host Controls</div>
-      <div style="font-size: 12px; font-weight: 700; color: #4fc06a; background: rgba(47,168,79,0.15); border-radius: 999px; padding: 6px 12px;">${phaseLabels[S.phase] || ''}</div>
+      <div style="display: flex; gap: 8px;">
+        ${room !== 'LOCAL' ? `<div style="font-size: 12px; font-weight: 800; color: #f1f7f2; background: #245133; border-radius: 999px; padding: 6px 12px; letter-spacing: 2px;">ROOM ${room}</div>` : ''}
+        <div style="font-size: 12px; font-weight: 700; color: #4fc06a; background: rgba(47,168,79,0.15); border-radius: 999px; padding: 6px 12px;">${phaseLabels[S.phase] || ''}</div>
+      </div>
     </div>
     ${body}
     <button onclick="doReset()" style="border: none; background: transparent; color: #5c7263; font-size: 13px; font-weight: 700; padding: 10px; text-decoration: underline;">Reset entire game</button>
