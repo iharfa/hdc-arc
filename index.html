@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HDC Trivia Challenge</title>
+<link rel="icon" href="./logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #0c1810; }
+  * { box-sizing: border-box; }
+  body { min-height: 100vh; color: #f1f7f2; font-family: 'Poppins', sans-serif; }
+  a { color: #4fc06a; } a:hover { color: #7ad98f; }
+  button { font-family: inherit; cursor: pointer; }
+  input { font-family: inherit; }
+  @keyframes popin { 0% { transform: scale(0.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+  .btn-primary { border: none; background: #2fa84f; color: #fff; font-weight: 900; border-radius: 14px; }
+  .btn-primary:active { transform: translateY(2px); }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const LETTERS = ['A', 'B', 'C', 'D'];
+const KEY = 'hdc-trivia-v1';
+const OPT_COLORS = ['oklch(0.68 0.15 150)', 'oklch(0.68 0.13 210)', 'oklch(0.78 0.14 85)', 'oklch(0.68 0.15 30)'];
+
+let questions = [];
+let shared = null;
+try { shared = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+if (!shared || !shared.phase) shared = freshShared();
+
+function freshShared() {
+  return { phase: 'lobby', qIndex: 0, answers: {}, revealed: false, timerStart: 0,
+           names: null, scores: null, teamCount: 4, timerSeconds: 30, points: 100 };
+}
+
+const bc = new BroadcastChannel('hdc-trivia');
+bc.onmessage = (e) => { shared = e.data; render(); };
+
+function setShared(patch, rerender) {
+  shared = Object.assign({}, shared, patch);
+  localStorage.setItem(KEY, JSON.stringify(shared));
+  bc.postMessage(shared);
+  if (rerender !== false) render();
+}
+
+function hashView() {
+  return location.hash === '#display' ? 'display' : location.hash === '#admin' ? 'admin' : 'home';
+}
+window.addEventListener('hashchange', render);
+
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ---- derived state ----
+function derive() {
+  const S = shared;
+  const teamCount = S.teamCount || 4;
+  const timerSecs = S.timerSeconds || 30;
+  const points = S.points || 100;
+  const names = [], scores = [];
+  for (let i = 0; i < teamCount; i++) {
+    names.push((S.names && S.names[i]) || ('Team ' + (i + 1)));
+    scores.push((S.scores && S.scores[i]) || 0);
+  }
+  const q = questions[S.qIndex] || { q: 'Loading questions…', a: ['', '', '', ''], correct: 0 };
+  const correctLetter = LETTERS[q.correct];
+  const elapsed = S.timerStart ? (Date.now() - S.timerStart) / 1000 : 0;
+  const timeLeft = Math.max(0, Math.ceil(timerSecs - elapsed));
+  const timerPct = timerSecs ? Math.max(0, 1 - elapsed / timerSecs) : 0;
+  return { S, teamCount, timerSecs, points, names, scores, q, correctLetter, timeLeft, timerPct };
+}
+
+function timerColor(t) { return t <= 5 ? '#e07a5f' : t <= 10 ? '#ffb54d' : '#4fc06a'; }
+function timerRing(pct) { return 'conic-gradient(#2fa84f ' + (pct * 360) + 'deg, #245133 0deg)'; }
+
+// ---- actions (global, called from inline handlers) ----
+function goDisplay() { location.hash = 'display'; }
+function goAdmin() { location.hash = 'admin'; }
+function setName(i, v) {
+  const d = derive(); const n = d.names.slice(); n[i] = v;
+  setShared({ names: n }, false); // ponytail: no local rerender so the input keeps focus; other tabs update via BroadcastChannel
+}
+function bumpTeams(delta) {
+  const d = derive();
+  setShared({ teamCount: Math.min(8, Math.max(2, d.teamCount + delta)) });
+}
+function bumpTimer(delta) {
+  const d = derive();
+  setShared({ timerSeconds: Math.min(90, Math.max(10, d.timerSecs + delta)) });
+}
+function startGame() {
+  const d = derive();
+  setShared({ phase: 'question', qIndex: 0, answers: {}, revealed: false,
+              timerStart: Date.now(), names: d.names, scores: d.names.map(() => 0) });
+}
+function pick(i, L) {
+  const d = derive();
+  const answers = Object.assign({}, d.S.answers);
+  if (answers[i] === L) delete answers[i]; else answers[i] = L;
+  setShared({ answers });
+}
+function doReveal() {
+  const d = derive();
+  if (d.S.revealed) return;
+  const ns = d.scores.map((s, i) => s + (d.S.answers[i] === d.correctLetter ? d.points : 0));
+  setShared({ revealed: true, scores: ns });
+}
+function doNext() {
+  const d = derive();
+  if (d.S.qIndex + 1 >= (questions.length || 1)) { setShared({ phase: 'final' }); return; }
+  setShared({ phase: 'question', qIndex: d.S.qIndex + 1, answers: {}, revealed: false, timerStart: Date.now() });
+}
+function doScoreboard() { setShared({ phase: 'scoreboard' }); }
+function backToQuestion() { setShared({ phase: 'question' }); }
+function doFinal() { setShared({ phase: 'final' }); }
+function doReset() { if (confirm('Reset the whole game?')) setShared(freshShared()); }
+
+// ---- views ----
+function ranked(d) {
+  return d.names.map((name, i) => ({ name, score: d.scores[i] }))
+    .sort((a, b) => b.score - a.score)
+    .map((t, i) => ({
+      rank: i + 1, name: t.name, score: t.score,
+      barPct: Math.max(6, (t.score / Math.max(1, Math.max.apply(null, d.scores))) * 100) + '%'
+    }));
+}
+
+function homeView() {
+  return `
+  <div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 40px; padding: 32px; text-align: center;">
+    <div style="background: #ffffff; border-radius: 20px; padding: 20px 32px;">
+      <img src="./logo.png" alt="Housing Development Corporation" style="width: 320px; max-width: 70vw; display: block;">
+    </div>
+    <div>
+      <div style="font-size: 14px; font-weight: 700; letter-spacing: 4px; color: #4fc06a; text-transform: uppercase;">Planning Division presents</div>
+      <div style="font-size: clamp(40px, 7vw, 84px); font-weight: 900; line-height: 1.05; margin-top: 8px;">The Big <span style="color: #4fc06a;">Trivia</span> Challenge</div>
+    </div>
+    <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
+      <button onclick="goDisplay()" style="border: none; background: #2fa84f; color: #ffffff; font-size: 22px; font-weight: 800; padding: 22px 44px; border-radius: 18px; box-shadow: 0 8px 0 #1c6f34;">🖥&#xFE0E; Big Screen</button>
+      <button onclick="goAdmin()" style="border: 3px solid #2fa84f; background: transparent; color: #7ad98f; font-size: 22px; font-weight: 800; padding: 22px 44px; border-radius: 18px;">📱&#xFE0E; Host Controls</button>
+    </div>
+    <div style="font-size: 14px; color: #8fa898; max-width: 420px;">Open <b>Big Screen</b> on the projector PC and <b>Host Controls</b> in another tab or window on the same computer — they stay in sync.</div>
+  </div>`;
+}
+
+function displayView(d) {
+  const S = d.S;
+  let body = '';
+  if (S.phase === 'lobby') {
+    body = `
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 36px; text-align: center;">
+      <div style="font-size: clamp(44px, 6.5vw, 90px); font-weight: 900; line-height: 1.05; animation: popin 0.5s ease;">Get <span style="color: #4fc06a;">Ready!</span></div>
+      <div style="font-size: 22px; color: #b7cbbd;">Grab your paddles — the game starts soon</div>
+      <div style="display: flex; gap: 18px; flex-wrap: wrap; justify-content: center;">
+        ${d.names.map(n => `<div style="background: #142519; border: 2px solid #245133; border-radius: 16px; padding: 18px 30px; font-size: 24px; font-weight: 800; animation: popin 0.5s ease;">${esc(n)}</div>`).join('')}
+      </div>
+    </div>`;
+  } else if (S.phase === 'question') {
+    const opts = d.q.a.map((text, i) => {
+      const isCorrect = i === d.q.correct, rev = S.revealed;
+      return `
+      <div style="display: flex; align-items: center; gap: 18px; border-radius: 18px; padding: 20px 24px; background: ${rev && isCorrect ? 'rgba(47,168,79,0.28)' : '#142519'}; opacity: ${rev && !isCorrect ? 0.35 : 1}; border: 3px solid ${rev && isCorrect ? '#4fc06a' : '#245133'}; transition: all 0.35s ease; animation: ${rev && isCorrect ? 'pulse 1s ease 2' : 'popin 0.4s ease'};">
+        <div style="flex: none; width: 58px; height: 58px; border-radius: 14px; background: ${OPT_COLORS[i]}; color: #0c1810; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 900;">${LETTERS[i]}</div>
+        <div style="font-size: clamp(20px, 2.2vw, 30px); font-weight: 700; line-height: 1.25;">${esc(text)}</div>
+        <div style="margin-left: auto; font-size: 30px;">${rev && isCorrect ? '✓' : ''}</div>
+      </div>`;
+    }).join('');
+    const results = S.revealed ? `
+    <div style="display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;">
+      ${d.names.map((name, i) => {
+        const ans = S.answers[i];
+        const ok = ans === d.correctLetter;
+        const result = ans ? (ok ? ans + ' ✓ +' + d.points : ans + ' ✗') : '—';
+        const color = ans ? (ok ? '#4fc06a' : '#e07a5f') : '#5c7263';
+        const border = ans ? (ok ? '#2fa84f' : '#6b3328') : '#245133';
+        return `<div style="display: flex; align-items: center; gap: 10px; background: #142519; border: 2px solid ${border}; border-radius: 14px; padding: 10px 18px; font-weight: 800; font-size: 19px; animation: popin 0.4s ease;"><span>${esc(name)}</span><span style="color: ${color};">${result}</span></div>`;
+      }).join('')}
+    </div>` : '';
+    const timeUp = (!S.revealed && d.timeLeft === 0) ? `
+    <div style="text-align: center; font-size: 26px; font-weight: 900; color: #ffb54d; animation: pulse 1s infinite;">⏰&#xFE0E; Time's up! Paddles up!</div>` : '';
+    body = `
+    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 34px; padding: 20px 0;">
+      <div style="text-align: center; font-size: clamp(28px, 3.6vw, 52px); font-weight: 800; line-height: 1.25; text-wrap: pretty; max-width: 1200px; margin: 0 auto; animation: popin 0.4s ease;">${esc(d.q.q)}</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; max-width: 1200px; width: 100%; margin: 0 auto;">${opts}</div>
+      ${results}
+      ${timeUp}
+    </div>`;
+  } else if (S.phase === 'scoreboard') {
+    body = `
+    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 30px; max-width: 900px; width: 100%; margin: 0 auto;">
+      <div style="text-align: center; font-size: clamp(36px, 5vw, 64px); font-weight: 900;">🏆&#xFE0E; Scoreboard</div>
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        ${ranked(d).map(r => `
+        <div style="display: flex; align-items: center; gap: 18px; animation: popin 0.5s ease;">
+          <div style="flex: none; width: 52px; font-size: 30px; font-weight: 900; color: #8fa898; text-align: center;">${r.rank}</div>
+          <div style="flex: 1; background: #142519; border-radius: 16px; padding: 6px; position: relative; overflow: hidden;">
+            <div style="position: absolute; inset: 0; width: ${r.barPct}; background: linear-gradient(90deg, #1c6f34, #2fa84f); border-radius: 16px; transition: width 0.8s ease;"></div>
+            <div style="position: relative; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
+              <span style="font-size: 26px; font-weight: 800;">${esc(r.name)}</span>
+              <span style="font-size: 26px; font-weight: 900;">${r.score}</span>
+            </div>
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  } else if (S.phase === 'final') {
+    const w = ranked(d)[0] || { name: '', score: 0 };
+    body = `
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px; text-align: center;">
+      <div style="font-size: 90px; animation: pulse 1.2s infinite;">🎉&#xFE0E;</div>
+      <div style="font-size: 20px; font-weight: 700; letter-spacing: 4px; color: #4fc06a; text-transform: uppercase;">Champions</div>
+      <div style="font-size: clamp(50px, 8vw, 110px); font-weight: 900; line-height: 1.05;">${esc(w.name)}</div>
+      <div style="font-size: 30px; font-weight: 800; color: #b7cbbd;">${w.score} points</div>
+    </div>`;
+  }
+  const topTimer = S.phase === 'question' ? `
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <div style="font-size: 15px; font-weight: 700; color: #8fa898;">Question ${S.qIndex + 1} / ${questions.length || 50}</div>
+    <div id="timerRing" style="width: 74px; height: 74px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: ${timerRing(d.timerPct)};">
+      <div id="timeLeft" style="width: 60px; height: 60px; border-radius: 50%; background: #0c1810; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 900; color: ${timerColor(d.timeLeft)};">${d.timeLeft}</div>
+    </div>
+  </div>` : '';
+  return `
+  <div style="min-height: 100vh; display: flex; flex-direction: column; padding: 28px 40px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="background: #ffffff; border-radius: 10px; padding: 6px 10px;"><img src="./logo.png" alt="HDC" style="height: 30px; display: block;"></div>
+        <div style="font-weight: 700; letter-spacing: 2px; font-size: 13px; color: #8fa898; text-transform: uppercase;">Planning Division · Trivia Challenge</div>
+      </div>
+      ${topTimer}
+    </div>
+    ${body}
+  </div>`;
+}
+
+function adminView(d) {
+  const S = d.S;
+  const phaseLabels = { lobby: 'Lobby', question: 'In Question', scoreboard: 'Scoreboard', final: 'Finished' };
+  let body = '';
+  if (S.phase === 'lobby') {
+    body = `
+    <div style="display: flex; flex-direction: column; gap: 10px; background: #142519; border-radius: 16px; padding: 16px;">
+      <div style="font-size: 13px; font-weight: 700; color: #8fa898; text-transform: uppercase; letter-spacing: 1px;">Game settings</div>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 15px; font-weight: 700;">Teams</span>
+        <span style="display: flex; align-items: center; gap: 10px;">
+          <button onclick="bumpTeams(-1)" style="width: 36px; height: 36px; border-radius: 10px; border: 2px solid #245133; background: transparent; color: #b7cbbd; font-size: 18px; font-weight: 900;">−</button>
+          <b style="width: 24px; text-align: center; font-size: 17px;">${d.teamCount}</b>
+          <button onclick="bumpTeams(1)" style="width: 36px; height: 36px; border-radius: 10px; border: 2px solid #245133; background: transparent; color: #b7cbbd; font-size: 18px; font-weight: 900;">+</button>
+        </span>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 15px; font-weight: 700;">Timer</span>
+        <span style="display: flex; align-items: center; gap: 10px;">
+          <button onclick="bumpTimer(-5)" style="width: 36px; height: 36px; border-radius: 10px; border: 2px solid #245133; background: transparent; color: #b7cbbd; font-size: 18px; font-weight: 900;">−</button>
+          <b style="width: 42px; text-align: center; font-size: 17px;">${d.timerSecs}s</b>
+          <button onclick="bumpTimer(5)" style="width: 36px; height: 36px; border-radius: 10px; border: 2px solid #245133; background: transparent; color: #b7cbbd; font-size: 18px; font-weight: 900;">+</button>
+        </span>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px; background: #142519; border-radius: 16px; padding: 16px;">
+      <div style="font-size: 13px; font-weight: 700; color: #8fa898; text-transform: uppercase; letter-spacing: 1px;">Team names</div>
+      ${d.names.map((n, i) => `<input value="${esc(n)}" oninput="setName(${i}, this.value)" style="background: #0c1810; border: 2px solid #245133; border-radius: 10px; color: #f1f7f2; font-size: 16px; font-weight: 700; padding: 12px 14px; width: 100%;">`).join('')}
+    </div>
+    <button onclick="startGame()" class="btn-primary" style="font-size: 20px; padding: 18px; box-shadow: 0 6px 0 #1c6f34;">▶&#xFE0E; Start Game</button>`;
+  } else if (S.phase === 'question') {
+    const rows = d.names.map((name, i) => `
+    <div style="display: flex; align-items: center; gap: 10px; background: #142519; border-radius: 14px; padding: 10px 12px;">
+      <div style="flex: 1; font-size: 15px; font-weight: 800; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${esc(name)}</div>
+      <div style="display: flex; gap: 6px;">
+        ${LETTERS.map((L, li) => {
+          const active = S.answers[i] === L;
+          return `<button onclick="pick(${i}, '${L}')" style="width: 44px; height: 44px; border-radius: 10px; font-size: 17px; font-weight: 900; border: 2px solid ${active ? OPT_COLORS[li] : '#245133'}; background: ${active ? OPT_COLORS[li] : 'transparent'}; color: ${active ? '#0c1810' : '#b7cbbd'};">${L}</button>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
+    body = `
+    <div style="background: #142519; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 8px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="font-size: 13px; font-weight: 700; color: #8fa898;">Q ${S.qIndex + 1} / ${questions.length || 50}</div>
+        <div style="font-size: 16px; font-weight: 900; color: ${timerColor(d.timeLeft)};">⏱&#xFE0E; <span id="timeLeft">${d.timeLeft}</span>s</div>
+      </div>
+      <div style="font-size: 16px; font-weight: 700; line-height: 1.4;">${esc(d.q.q)}</div>
+      <div style="font-size: 13px; font-weight: 700; color: #4fc06a;">✓ Correct: ${d.correctLetter} — ${esc(d.q.a[d.q.correct])}</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <div style="font-size: 13px; font-weight: 700; color: #8fa898; text-transform: uppercase; letter-spacing: 1px;">Enter each team's paddle</div>
+      ${rows}
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <button onclick="doReveal()" ${S.revealed ? 'disabled' : ''} style="border: none; background: ${S.revealed ? '#5c7263' : '#ffb54d'}; color: #0c1810; font-size: 17px; font-weight: 900; padding: 16px; border-radius: 14px;">👁&#xFE0E; Reveal</button>
+      <button onclick="doNext()" class="btn-primary" style="font-size: 17px; padding: 16px;">Next ▸</button>
+      <button onclick="doScoreboard()" style="grid-column: span 2; border: 2px solid #245133; background: transparent; color: #b7cbbd; font-size: 15px; font-weight: 800; padding: 13px; border-radius: 14px;">🏆&#xFE0E; Show Scoreboard</button>
+    </div>`;
+  } else if (S.phase === 'scoreboard') {
+    body = `
+    <div style="background: #142519; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 10px;">
+      ${ranked(d).map(r => `<div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 16px;"><span>${r.rank}. ${esc(r.name)}</span><span style="color: #4fc06a;">${r.score}</span></div>`).join('')}
+    </div>
+    <button onclick="backToQuestion()" class="btn-primary" style="font-size: 17px; padding: 16px;">◂ Back to Question</button>
+    <button onclick="doFinal()" style="border: 2px solid #ffb54d; background: transparent; color: #ffb54d; font-size: 15px; font-weight: 800; padding: 13px; border-radius: 14px;">🎉&#xFE0E; End Game — Crown Winner</button>`;
+  } else if (S.phase === 'final') {
+    const w = ranked(d)[0] || { name: '', score: 0 };
+    body = `<div style="background: #142519; border-radius: 16px; padding: 20px; text-align: center; font-size: 18px; font-weight: 800;">🎉&#xFE0E; ${esc(w.name)} wins with ${w.score} pts</div>`;
+  }
+  return `
+  <div style="min-height: 100vh; max-width: 480px; margin: 0 auto; padding: 20px 16px 40px; display: flex; flex-direction: column; gap: 16px;">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <div style="font-size: 18px; font-weight: 900;">🎛&#xFE0E; Host Controls</div>
+      <div style="font-size: 12px; font-weight: 700; color: #4fc06a; background: rgba(47,168,79,0.15); border-radius: 999px; padding: 6px 12px;">${phaseLabels[S.phase] || ''}</div>
+    </div>
+    ${body}
+    <button onclick="doReset()" style="border: none; background: transparent; color: #5c7263; font-size: 13px; font-weight: 700; padding: 10px; text-decoration: underline;">Reset entire game</button>
+  </div>`;
+}
+
+function render() {
+  const d = derive();
+  const view = hashView();
+  document.getElementById('app').innerHTML =
+    view === 'display' ? displayView(d) : view === 'admin' ? adminView(d) : homeView();
+}
+
+// ponytail: 300ms tick patches only the timer text/ring in place; full render only when the clock hits 0 (to show "Time's up")
+let lastTimeLeft = null;
+setInterval(() => {
+  if (shared.phase !== 'question' || hashView() === 'home') return;
+  const d = derive();
+  if (d.timeLeft === 0 && lastTimeLeft !== 0 && !d.S.revealed) { lastTimeLeft = 0; render(); return; }
+  lastTimeLeft = d.timeLeft;
+  const t = document.getElementById('timeLeft');
+  if (t) { t.textContent = d.timeLeft; t.style.color = timerColor(d.timeLeft); }
+  const ring = document.getElementById('timerRing');
+  if (ring) ring.style.background = timerRing(d.timerPct);
+}, 300);
+
+fetch('./questions.json').then(r => r.json()).then(d => { questions = d.questions; render(); });
+render();
+</script>
+</body>
+</html>
