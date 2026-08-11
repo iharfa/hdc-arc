@@ -24,7 +24,7 @@
 <div id="app"></div>
 <script>
 const LETTERS = ['A', 'B', 'C', 'D'];
-const KEY = 'hdc-trivia-v1';
+const KEY = 'hdc-trivia-v2';
 const OPT_COLORS = ['oklch(0.68 0.15 150)', 'oklch(0.68 0.13 210)', 'oklch(0.78 0.14 85)', 'oklch(0.68 0.15 30)'];
 
 let questions = [];
@@ -33,8 +33,10 @@ try { shared = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
 if (!shared || !shared.phase) shared = freshShared();
 
 function freshShared() {
-  return { phase: 'lobby', qIndex: 0, answers: {}, revealed: false, timerStart: 0,
-           names: null, scores: null, teamCount: 4, timerSeconds: 30, points: 100 };
+  // history: {qIndex: {teamIdx: letter}}, revealedQs: {qIndex: true}, adjust: {teamIdx: extraPoints}
+  // scores are DERIVED from these, so any past answer can be corrected and everything recomputes
+  return { phase: 'lobby', qIndex: 0, history: {}, revealedQs: {}, adjust: {}, timerStart: 0,
+           names: null, teamCount: 4, timerSeconds: 30, points: 100 };
 }
 
 const bc = new BroadcastChannel('hdc-trivia');
@@ -105,17 +107,26 @@ function derive() {
   const teamCount = S.teamCount || 4;
   const timerSecs = S.timerSeconds || 30;
   const points = S.points || 100;
+  const history = S.history || {};
+  const revealedQs = S.revealedQs || {};
+  const adjust = S.adjust || {};
   const names = [], scores = [];
   for (let i = 0; i < teamCount; i++) {
     names.push((S.names && S.names[i]) || ('Team ' + (i + 1)));
-    scores.push((S.scores && S.scores[i]) || 0);
+    let sc = adjust[i] || 0;
+    for (const qi in revealedQs) {
+      if (revealedQs[qi] && questions[qi] && (history[qi] || {})[i] === LETTERS[questions[qi].correct]) sc += points;
+    }
+    scores.push(sc);
   }
   const q = questions[S.qIndex] || { q: 'Loading questions…', a: ['', '', '', ''], correct: 0 };
   const correctLetter = LETTERS[q.correct];
+  const answers = history[S.qIndex] || {};
+  const revealed = !!revealedQs[S.qIndex];
   const elapsed = S.timerStart ? (Date.now() - S.timerStart) / 1000 : 0;
   const timeLeft = Math.max(0, Math.ceil(timerSecs - elapsed));
   const timerPct = timerSecs ? Math.max(0, 1 - elapsed / timerSecs) : 0;
-  return { S, teamCount, timerSecs, points, names, scores, q, correctLetter, timeLeft, timerPct };
+  return { S, teamCount, timerSecs, points, names, scores, q, correctLetter, answers, revealed, timeLeft, timerPct };
 }
 
 function timerColor(t) { return t <= 5 ? '#e07a5f' : t <= 10 ? '#ffb54d' : '#4fc06a'; }
@@ -138,25 +149,37 @@ function bumpTimer(delta) {
 }
 function startGame() {
   const d = derive();
-  setShared({ phase: 'question', qIndex: 0, answers: {}, revealed: false,
-              timerStart: Date.now(), names: d.names, scores: d.names.map(() => 0) });
+  setShared({ phase: 'question', qIndex: 0, history: {}, revealedQs: {}, adjust: {},
+              timerStart: Date.now(), names: d.names });
 }
 function pick(i, L) {
   const d = derive();
-  const answers = Object.assign({}, d.S.answers);
-  if (answers[i] === L) delete answers[i]; else answers[i] = L;
-  setShared({ answers });
+  const cur = Object.assign({}, d.answers);
+  if (cur[i] === L) delete cur[i]; else cur[i] = L;
+  const history = Object.assign({}, d.S.history);
+  history[d.S.qIndex] = cur;
+  setShared({ history });
 }
 function doReveal() {
   const d = derive();
-  if (d.S.revealed) return;
-  const ns = d.scores.map((s, i) => s + (d.S.answers[i] === d.correctLetter ? d.points : 0));
-  setShared({ revealed: true, scores: ns });
+  const revealedQs = Object.assign({}, d.S.revealedQs);
+  revealedQs[d.S.qIndex] = !revealedQs[d.S.qIndex];
+  setShared({ revealedQs });
 }
 function doNext() {
   const d = derive();
-  if (d.S.qIndex + 1 >= (questions.length || 1)) { setShared({ phase: 'final' }); return; }
-  setShared({ phase: 'question', qIndex: d.S.qIndex + 1, answers: {}, revealed: false, timerStart: Date.now() });
+  if (d.S.qIndex + 1 >= (questions.length || 1)) { setShared({ phase: 'final', revealCount: 0 }); return; }
+  setShared({ phase: 'question', qIndex: d.S.qIndex + 1, timerStart: Date.now() });
+}
+function doPrev() {
+  const d = derive();
+  if (d.S.qIndex > 0) setShared({ phase: 'question', qIndex: d.S.qIndex - 1 });
+}
+function adjustScore(i, delta) {
+  const d = derive();
+  const adjust = Object.assign({}, d.S.adjust);
+  adjust[i] = (adjust[i] || 0) + delta;
+  setShared({ adjust });
 }
 function doScoreboard() { setShared({ phase: 'scoreboard' }); }
 function backToQuestion() { setShared({ phase: 'question' }); }
@@ -255,7 +278,7 @@ function displayView(d) {
     </div>`;
   } else if (S.phase === 'question') {
     const opts = d.q.a.map((text, i) => {
-      const isCorrect = i === d.q.correct, rev = S.revealed;
+      const isCorrect = i === d.q.correct, rev = d.revealed;
       return `
       <div style="display: flex; align-items: center; gap: 18px; border-radius: 18px; padding: 20px 24px; background: ${rev && isCorrect ? 'rgba(47,168,79,0.28)' : '#142519'}; opacity: ${rev && !isCorrect ? 0.35 : 1}; border: 3px solid ${rev && isCorrect ? '#4fc06a' : '#245133'}; transition: all 0.35s ease; animation: ${rev && isCorrect ? 'pulse 1s ease 2' : 'popin 0.4s ease'};">
         <div style="flex: none; width: 58px; height: 58px; border-radius: 14px; background: ${OPT_COLORS[i]}; color: #0c1810; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 900;">${LETTERS[i]}</div>
@@ -263,10 +286,10 @@ function displayView(d) {
         <div style="margin-left: auto; font-size: 30px;">${rev && isCorrect ? '✓' : ''}</div>
       </div>`;
     }).join('');
-    const results = S.revealed ? `
+    const results = d.revealed ? `
     <div style="display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;">
       ${d.names.map((name, i) => {
-        const ans = S.answers[i];
+        const ans = d.answers[i];
         const ok = ans === d.correctLetter;
         const result = ans ? (ok ? ans + ' ✓ +' + d.points : ans + ' ✗') : '—';
         const color = ans ? (ok ? '#4fc06a' : '#e07a5f') : '#5c7263';
@@ -274,7 +297,7 @@ function displayView(d) {
         return `<div style="display: flex; align-items: center; gap: 10px; background: #142519; border: 2px solid ${border}; border-radius: 14px; padding: 10px 18px; font-weight: 800; font-size: 19px; animation: popin 0.4s ease;"><span>${esc(name)}</span><span style="color: ${color};">${result}</span></div>`;
       }).join('')}
     </div>` : '';
-    const timeUp = (!S.revealed && d.timeLeft === 0) ? `
+    const timeUp = (!d.revealed && d.timeLeft === 0) ? `
     <div style="text-align: center; font-size: 26px; font-weight: 900; color: #ffb54d; animation: pulse 1s infinite;">⏰&#xFE0E; Time's up! Paddles up!</div>` : '';
     body = `
     <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 34px; padding: 20px 0;">
@@ -392,7 +415,7 @@ function adminView(d) {
       <div style="flex: 1; font-size: 15px; font-weight: 800; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${esc(name)}</div>
       <div style="display: flex; gap: 6px;">
         ${LETTERS.map((L, li) => {
-          const active = S.answers[i] === L;
+          const active = d.answers[i] === L;
           return `<button onclick="pick(${i}, '${L}')" style="width: 44px; height: 44px; border-radius: 10px; font-size: 17px; font-weight: 900; border: 2px solid ${active ? OPT_COLORS[li] : '#245133'}; background: ${active ? OPT_COLORS[li] : 'transparent'}; color: ${active ? '#0c1810' : '#b7cbbd'};">${L}</button>`;
         }).join('')}
       </div>
@@ -411,15 +434,24 @@ function adminView(d) {
       ${rows}
     </div>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-      <button onclick="doReveal()" ${S.revealed ? 'disabled' : ''} style="border: none; background: ${S.revealed ? '#5c7263' : '#ffb54d'}; color: #0c1810; font-size: 17px; font-weight: 900; padding: 16px; border-radius: 14px;">👁&#xFE0E; Reveal</button>
+      <button onclick="doReveal()" style="${d.revealed ? 'border: 2px solid #ffb54d; background: transparent; color: #ffb54d;' : 'border: none; background: #ffb54d; color: #0c1810;'} font-size: 17px; font-weight: 900; padding: 16px; border-radius: 14px;">${d.revealed ? '↩&#xFE0E; Undo Reveal' : '👁&#xFE0E; Reveal'}</button>
       <button onclick="doNext()" class="btn-primary" style="font-size: 17px; padding: 16px;">Next ▸</button>
-      <button onclick="doScoreboard()" style="grid-column: span 2; border: 2px solid #245133; background: transparent; color: #b7cbbd; font-size: 15px; font-weight: 800; padding: 13px; border-radius: 14px;">🏆&#xFE0E; Show Scoreboard</button>
+      <button onclick="doPrev()" ${S.qIndex === 0 ? 'disabled' : ''} style="border: 2px solid #245133; background: transparent; color: ${S.qIndex === 0 ? '#3a4d40' : '#b7cbbd'}; font-size: 15px; font-weight: 800; padding: 13px; border-radius: 14px;">◂ Prev Question</button>
+      <button onclick="doScoreboard()" style="border: 2px solid #245133; background: transparent; color: #b7cbbd; font-size: 15px; font-weight: 800; padding: 13px; border-radius: 14px;">🏆&#xFE0E; Scoreboard</button>
       <button onclick="doFinal()" style="grid-column: span 2; border: 2px solid #ffb54d; background: transparent; color: #ffb54d; font-size: 15px; font-weight: 800; padding: 13px; border-radius: 14px;">🎉&#xFE0E; End Game — Podium Reveal</button>
     </div>`;
   } else if (S.phase === 'scoreboard') {
+    const rows = d.names.map((name, i) => ({ name, score: d.scores[i], i })).sort((a, b) => b.score - a.score);
     body = `
     <div style="background: #142519; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 10px;">
-      ${ranked(d).map(r => `<div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 16px;"><span>${r.rank}. ${esc(r.name)}</span><span style="color: #4fc06a;">${r.score}</span></div>`).join('')}
+      <div style="font-size: 13px; font-weight: 700; color: #8fa898; text-transform: uppercase; letter-spacing: 1px;">Scores · use − / + to correct</div>
+      ${rows.map((r, rank) => `
+      <div style="display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 16px;">
+        <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rank + 1}. ${esc(r.name)}</span>
+        <button onclick="adjustScore(${r.i}, -50)" style="width: 36px; height: 36px; border-radius: 10px; border: 2px solid #245133; background: transparent; color: #e07a5f; font-size: 17px; font-weight: 900;">−</button>
+        <span style="width: 52px; text-align: center; color: #4fc06a;">${r.score}</span>
+        <button onclick="adjustScore(${r.i}, 50)" style="width: 36px; height: 36px; border-radius: 10px; border: 2px solid #245133; background: transparent; color: #7ad98f; font-size: 17px; font-weight: 900;">+</button>
+      </div>`).join('')}
     </div>
     <button onclick="backToQuestion()" class="btn-primary" style="font-size: 17px; padding: 16px;">◂ Back to Question</button>
     <button onclick="doFinal()" style="border: 2px solid #ffb54d; background: transparent; color: #ffb54d; font-size: 15px; font-weight: 800; padding: 13px; border-radius: 14px;">🎉&#xFE0E; End Game — Podium Reveal</button>`;
@@ -470,7 +502,7 @@ let lastTimeLeft = null;
 setInterval(() => {
   if (shared.phase !== 'question' || hashView() === 'home') return;
   const d = derive();
-  if (d.timeLeft === 0 && lastTimeLeft !== 0 && !d.S.revealed) { lastTimeLeft = 0; render(); return; }
+  if (d.timeLeft === 0 && lastTimeLeft !== 0 && !d.revealed) { lastTimeLeft = 0; render(); return; }
   lastTimeLeft = d.timeLeft;
   const t = document.getElementById('timeLeft');
   if (t) { t.textContent = d.timeLeft; t.style.color = timerColor(d.timeLeft); }
