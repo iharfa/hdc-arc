@@ -160,8 +160,45 @@ function doNext() {
 }
 function doScoreboard() { setShared({ phase: 'scoreboard' }); }
 function backToQuestion() { setShared({ phase: 'question' }); }
-function doFinal() { setShared({ phase: 'final' }); }
+function doFinal() { setShared({ phase: 'final', revealCount: 0 }); }
+function revealNext() {
+  const d = derive();
+  setShared({ revealCount: Math.min(d.teamCount, (d.S.revealCount || 0) + 1) });
+}
 function doReset() { if (confirm('Reset the whole game?')) setShared(freshShared()); }
+
+function ord(place) {
+  return place === 1 ? 'Champion' : place === 2 ? '2nd place' : place === 3 ? '3rd place' : place + 'th place';
+}
+
+// ---- confetti (hand-rolled, ~30 lines, no dependency) ----
+let confettiFired = false;
+function fireConfetti() {
+  const c = document.createElement('canvas');
+  c.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:999;';
+  document.body.appendChild(c);
+  c.width = innerWidth; c.height = innerHeight;
+  const ctx = c.getContext('2d');
+  const COLORS = ['#2fa84f', '#7ad98f', '#4fc06a', '#ffb54d', '#ffffff'];
+  const parts = Array.from({ length: 220 }, () => ({
+    x: Math.random() * c.width, y: -30 - Math.random() * c.height * 0.6,
+    w: 6 + Math.random() * 8, h: 4 + Math.random() * 6,
+    vx: -1.5 + Math.random() * 3, vy: 2.5 + Math.random() * 3.5,
+    rot: Math.random() * Math.PI, vr: -0.12 + Math.random() * 0.24,
+    color: COLORS[Math.floor(Math.random() * COLORS.length)]
+  }));
+  let frames = 0;
+  (function tick() {
+    ctx.clearRect(0, 0, c.width, c.height);
+    for (const p of parts) {
+      p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.fillStyle = p.color; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    }
+    if (++frames < 450) requestAnimationFrame(tick); else c.remove();
+  })();
+}
 
 // ---- views ----
 function ranked(d) {
@@ -265,13 +302,36 @@ function displayView(d) {
       </div>
     </div>`;
   } else if (S.phase === 'final') {
-    const w = ranked(d)[0] || { name: '', score: 0 };
+    const rc = S.revealCount || 0;
+    const rows = ranked(d);
+    const champion = rc >= d.teamCount;
+    const podium = rows.map(r => {
+      const shown = r.rank > d.teamCount - rc;
+      const isChamp = r.rank === 1 && shown;
+      if (!shown) return `
+      <div style="display: flex; align-items: center; gap: 18px; opacity: 0.45;">
+        <div style="flex: none; width: 52px; font-size: 28px; font-weight: 900; color: #5c7263; text-align: center;">${r.rank}</div>
+        <div style="flex: 1; background: #101d14; border: 2px dashed #245133; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; padding: 16px 22px;">
+          <span style="font-size: 24px; font-weight: 800; letter-spacing: 6px; color: #5c7263;">? ? ?</span>
+          <span style="font-size: 24px; font-weight: 900; color: #5c7263;">—</span>
+        </div>
+      </div>`;
+      return `
+      <div style="display: flex; align-items: center; gap: 18px; animation: popin 0.6s ease;">
+        <div style="flex: none; width: 52px; font-size: 28px; font-weight: 900; color: ${isChamp ? '#ffb54d' : '#8fa898'}; text-align: center;">${isChamp ? '🏆&#xFE0E;' : r.rank}</div>
+        <div style="flex: 1; background: ${isChamp ? 'rgba(47,168,79,0.28)' : '#142519'}; border: 3px solid ${isChamp ? '#ffb54d' : '#245133'}; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; padding: 16px 22px; ${isChamp ? 'animation: pulse 1.2s ease 3;' : ''}">
+          <span style="font-size: ${isChamp ? 30 : 24}px; font-weight: 900;">${esc(r.name)}</span>
+          <span style="font-size: ${isChamp ? 30 : 24}px; font-weight: 900; color: ${isChamp ? '#ffb54d' : '#f1f7f2'};">${r.score}</span>
+        </div>
+      </div>`;
+    }).join('');
     body = `
-    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px; text-align: center;">
-      <div style="font-size: 90px; animation: pulse 1.2s infinite;">🎉&#xFE0E;</div>
-      <div style="font-size: 20px; font-weight: 700; letter-spacing: 4px; color: #4fc06a; text-transform: uppercase;">Champions</div>
-      <div style="font-size: clamp(50px, 8vw, 110px); font-weight: 900; line-height: 1.05;">${esc(w.name)}</div>
-      <div style="font-size: 30px; font-weight: 800; color: #b7cbbd;">${w.score} points</div>
+    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 26px; max-width: 900px; width: 100%; margin: 0 auto;">
+      <div style="text-align: center;">
+        <div style="font-size: 18px; font-weight: 700; letter-spacing: 4px; color: #4fc06a; text-transform: uppercase;">${champion ? 'Champions' : 'Final Results'}</div>
+        ${champion ? `<div style="font-size: clamp(40px, 6vw, 80px); font-weight: 900; line-height: 1.1; animation: popin 0.6s ease;">🎉&#xFE0E; ${esc(rows[0].name)}</div>` : `<div style="font-size: clamp(30px, 4.5vw, 56px); font-weight: 900;">The moment of truth…</div>`}
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 14px;">${podium}</div>
     </div>`;
   }
   const topTimer = S.phase === 'question' ? `
@@ -354,6 +414,7 @@ function adminView(d) {
       <button onclick="doReveal()" ${S.revealed ? 'disabled' : ''} style="border: none; background: ${S.revealed ? '#5c7263' : '#ffb54d'}; color: #0c1810; font-size: 17px; font-weight: 900; padding: 16px; border-radius: 14px;">👁&#xFE0E; Reveal</button>
       <button onclick="doNext()" class="btn-primary" style="font-size: 17px; padding: 16px;">Next ▸</button>
       <button onclick="doScoreboard()" style="grid-column: span 2; border: 2px solid #245133; background: transparent; color: #b7cbbd; font-size: 15px; font-weight: 800; padding: 13px; border-radius: 14px;">🏆&#xFE0E; Show Scoreboard</button>
+      <button onclick="doFinal()" style="grid-column: span 2; border: 2px solid #ffb54d; background: transparent; color: #ffb54d; font-size: 15px; font-weight: 800; padding: 13px; border-radius: 14px;">🎉&#xFE0E; End Game — Podium Reveal</button>
     </div>`;
   } else if (S.phase === 'scoreboard') {
     body = `
@@ -361,10 +422,24 @@ function adminView(d) {
       ${ranked(d).map(r => `<div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 16px;"><span>${r.rank}. ${esc(r.name)}</span><span style="color: #4fc06a;">${r.score}</span></div>`).join('')}
     </div>
     <button onclick="backToQuestion()" class="btn-primary" style="font-size: 17px; padding: 16px;">◂ Back to Question</button>
-    <button onclick="doFinal()" style="border: 2px solid #ffb54d; background: transparent; color: #ffb54d; font-size: 15px; font-weight: 800; padding: 13px; border-radius: 14px;">🎉&#xFE0E; End Game — Crown Winner</button>`;
+    <button onclick="doFinal()" style="border: 2px solid #ffb54d; background: transparent; color: #ffb54d; font-size: 15px; font-weight: 800; padding: 13px; border-radius: 14px;">🎉&#xFE0E; End Game — Podium Reveal</button>`;
   } else if (S.phase === 'final') {
-    const w = ranked(d)[0] || { name: '', score: 0 };
-    body = `<div style="background: #142519; border-radius: 16px; padding: 20px; text-align: center; font-size: 18px; font-weight: 800;">🎉&#xFE0E; ${esc(w.name)} wins with ${w.score} pts</div>`;
+    const rc = S.revealCount || 0;
+    const rows = ranked(d);
+    if (rc < d.teamCount) {
+      const nextPlace = d.teamCount - rc;
+      const revealedList = rows.filter(r => r.rank > nextPlace).map(r =>
+        `<div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 15px;"><span>${r.rank}. ${esc(r.name)}</span><span style="color: #4fc06a;">${r.score}</span></div>`).join('');
+      body = `
+      <div style="background: #142519; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="font-size: 13px; font-weight: 700; color: #8fa898; text-transform: uppercase; letter-spacing: 1px;">Podium reveal — bottom to top</div>
+        ${revealedList || '<div style="font-size: 14px; color: #5c7263;">Nothing revealed yet. Build the suspense…</div>'}
+      </div>
+      <button onclick="revealNext()" class="btn-primary" style="font-size: 19px; padding: 18px; box-shadow: 0 6px 0 #1c6f34; ${nextPlace === 1 ? 'background: #ffb54d; color: #0c1810; box-shadow: 0 6px 0 #8a5c1a;' : ''}">${nextPlace === 1 ? '🏆&#xFE0E; Reveal the Champion!' : '👁&#xFE0E; Reveal ' + ord(nextPlace)}</button>
+      <button onclick="doScoreboard()" style="border: 2px solid #245133; background: transparent; color: #b7cbbd; font-size: 14px; font-weight: 800; padding: 12px; border-radius: 14px;">◂ Back to Scoreboard</button>`;
+    } else {
+      body = `<div style="background: #142519; border-radius: 16px; padding: 20px; text-align: center; font-size: 18px; font-weight: 800;">🎉&#xFE0E; ${esc(rows[0].name)} wins with ${rows[0].score} pts</div>`;
+    }
   }
   return `
   <div style="min-height: 100vh; max-width: 480px; margin: 0 auto; padding: 20px 16px 40px; display: flex; flex-direction: column; gap: 16px;">
@@ -385,6 +460,9 @@ function render() {
   const view = hashView();
   document.getElementById('app').innerHTML =
     view === 'display' ? displayView(d) : view === 'admin' ? adminView(d) : homeView();
+  const championRevealed = d.S.phase === 'final' && (d.S.revealCount || 0) >= d.teamCount;
+  if (championRevealed && !confettiFired && view !== 'home') { confettiFired = true; fireConfetti(); }
+  if (!championRevealed) confettiFired = false;
 }
 
 // ponytail: 300ms tick patches only the timer text/ring in place; full render only when the clock hits 0 (to show "Time's up")
