@@ -350,7 +350,6 @@ function displayView(d) {
     <div style="text-align: center; font-size: 26px; font-weight: 900; color: #ffb54d; animation: pulse 1s infinite;">⏰&#xFE0E; Time's up! Paddles up!</div>` : '';
     body = `
     <div ${d.q.fun ? 'class="fun-card"' : ''} style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 34px; padding: ${d.q.fun ? '28px' : '20px 0'}; ${d.q.fun ? 'margin: 10px 0;' : ''}">
-      ${d.q.fun ? '<div style="text-align: center; font-size: clamp(18px, 1.8vw, 26px); font-weight: 900; color: #4fc06a; letter-spacing: 2px; text-transform: uppercase;">🎉&#xFE0E; Just for fun — every answer wins!</div>' : ''}
       <div class="q-font" style="text-align: center; font-size: clamp(28px, 3.6vw, 52px); font-weight: 800; line-height: 1.25; text-wrap: pretty; max-width: 1200px; margin: 0 auto; animation: popin 0.4s ease;">${esc(d.q.q)}</div>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; max-width: 1200px; width: 100%; margin: 0 auto;">${opts}</div>
       ${results}
