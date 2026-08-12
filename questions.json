@@ -562,5 +562,27 @@
       ],
       "fun": true
     }
+  ],
+  "warmup": [
+    {
+      "s": "Let's put the school next to the busiest highway.",
+      "good": false
+    },
+    {
+      "s": "Let's make sure everyone can walk safely to the park.",
+      "good": true
+    },
+    {
+      "s": "Let's remove all the trees because they take up parking space.",
+      "good": false
+    },
+    {
+      "s": "Let's build first and figure out drainage later.",
+      "good": false
+    },
+    {
+      "s": "Let's put everything people need within walking distance.",
+      "good": true
+    }
   ]
 }
