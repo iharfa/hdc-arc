@@ -15,6 +15,8 @@
   button { font-family: inherit; cursor: pointer; }
   input { font-family: inherit; }
   .q-font { font-family: 'Raleway', sans-serif; }
+  .fun-card { border: 3px solid #4fc06a; border-radius: 26px; animation: glowpulse 2.2s ease-in-out infinite; }
+  @keyframes glowpulse { 0%, 100% { box-shadow: 0 0 28px rgba(79,192,106,0.4), inset 0 0 24px rgba(79,192,106,0.1); } 50% { box-shadow: 0 0 60px rgba(79,192,106,0.75), inset 0 0 24px rgba(79,192,106,0.18); } }
   @keyframes popin { 0% { transform: scale(0.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
   @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
   .btn-primary { border: none; background: #2fa84f; color: #fff; font-weight: 900; border-radius: 14px; }
@@ -29,6 +31,14 @@ const KEY = 'hdc-trivia-v2';
 const OPT_COLORS = ['oklch(0.68 0.15 150)', 'oklch(0.68 0.13 210)', 'oklch(0.78 0.14 85)', 'oklch(0.68 0.15 30)'];
 
 let questions = [];
+let baseQuestions = [], funQuestions = [];
+// Fun questions (no wrong answer, no points) slot in as every 3rd question, order shuffled at game start
+function buildDeck(funOrder) {
+  if (!funOrder || !funOrder.length) return baseQuestions;
+  const out = baseQuestions.slice();
+  funOrder.forEach((fi, k) => out.splice(2 + k * 3, 0, funQuestions[fi]));
+  return out;
+}
 let shared = null;
 try { shared = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
 if (!shared || !shared.phase) shared = freshShared();
@@ -105,6 +115,7 @@ function esc(s) {
 // ---- derived state ----
 function derive() {
   const S = shared;
+  questions = buildDeck(S.funOrder);
   const teamCount = S.teamCount || 4;
   const timerSecs = S.timerSeconds || 30;
   const points = S.points || 100;
@@ -116,7 +127,7 @@ function derive() {
     names.push((S.names && S.names[i]) || ('Team ' + (i + 1)));
     let sc = adjust[i] || 0;
     for (const qi in revealedQs) {
-      if (revealedQs[qi] && questions[qi] && (history[qi] || {})[i] === LETTERS[questions[qi].correct]) sc += points;
+      if (revealedQs[qi] && questions[qi] && !questions[qi].fun && (history[qi] || {})[i] === LETTERS[questions[qi].correct]) sc += points;
     }
     scores.push(sc);
   }
@@ -150,8 +161,9 @@ function bumpTimer(delta) {
 }
 function startGame() {
   const d = derive();
+  const funOrder = funQuestions.map((_, i) => i).sort(() => Math.random() - 0.5);
   setShared({ phase: 'question', qIndex: 0, history: {}, revealedQs: {}, adjust: {},
-              timerStart: Date.now(), names: d.names });
+              timerStart: Date.now(), names: d.names, funOrder });
 }
 function pick(i, L) {
   const d = derive();
@@ -290,7 +302,7 @@ function displayView(d) {
     </div>`;
   } else if (S.phase === 'question') {
     const opts = d.q.a.map((text, i) => {
-      const isCorrect = i === d.q.correct, rev = d.revealed;
+      const isCorrect = d.q.fun ? true : i === d.q.correct, rev = d.revealed;
       return `
       <div style="display: flex; align-items: center; gap: 18px; border-radius: 18px; padding: 20px 24px; background: ${rev && isCorrect ? 'rgba(47,168,79,0.28)' : '#142519'}; opacity: ${rev && !isCorrect ? 0.35 : 1}; border: 3px solid ${rev && isCorrect ? '#4fc06a' : '#245133'}; transition: all 0.35s ease; animation: ${rev && isCorrect ? 'pulse 1s ease 2' : 'popin 0.4s ease'};">
         <div style="flex: none; width: 58px; height: 58px; border-radius: 14px; background: ${OPT_COLORS[i]}; color: #0c1810; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 900;">${LETTERS[i]}</div>
@@ -302,8 +314,8 @@ function displayView(d) {
     <div style="display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;">
       ${d.names.map((name, i) => {
         const ans = d.answers[i];
-        const ok = ans === d.correctLetter;
-        const result = ans ? (ok ? ans + ' ✓ +' + d.points : ans + ' ✗') : '—';
+        const ok = d.q.fun ? !!ans : ans === d.correctLetter;
+        const result = ans ? (ok ? ans + ' ✓' + (d.q.fun ? '' : ' +' + d.points) : ans + ' ✗') : '—';
         const color = ans ? (ok ? '#4fc06a' : '#e07a5f') : '#5c7263';
         const border = ans ? (ok ? '#2fa84f' : '#6b3328') : '#245133';
         return `<div style="display: flex; align-items: center; gap: 10px; background: #142519; border: 2px solid ${border}; border-radius: 14px; padding: 10px 18px; font-weight: 800; font-size: 19px; animation: popin 0.4s ease;"><span>${esc(name)}</span><span style="color: ${color};">${result}</span></div>`;
@@ -312,7 +324,8 @@ function displayView(d) {
     const timeUp = (!d.revealed && d.timeLeft === 0) ? `
     <div style="text-align: center; font-size: 26px; font-weight: 900; color: #ffb54d; animation: pulse 1s infinite;">⏰&#xFE0E; Time's up! Paddles up!</div>` : '';
     body = `
-    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 34px; padding: 20px 0;">
+    <div ${d.q.fun ? 'class="fun-card"' : ''} style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 34px; padding: ${d.q.fun ? '28px' : '20px 0'}; ${d.q.fun ? 'margin: 10px 0;' : ''}">
+      ${d.q.fun ? '<div style="text-align: center; font-size: clamp(18px, 1.8vw, 26px); font-weight: 900; color: #4fc06a; letter-spacing: 2px; text-transform: uppercase;">🎉&#xFE0E; Just for fun — every answer wins!</div>' : ''}
       <div class="q-font" style="text-align: center; font-size: clamp(28px, 3.6vw, 52px); font-weight: 800; line-height: 1.25; text-wrap: pretty; max-width: 1200px; margin: 0 auto; animation: popin 0.4s ease;">${esc(d.q.q)}</div>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; max-width: 1200px; width: 100%; margin: 0 auto;">${opts}</div>
       ${results}
@@ -435,13 +448,15 @@ function adminView(d) {
       </div>
     </div>`).join('');
     body = `
-    <div style="background: #142519; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 8px;">
+    <div ${d.q.fun ? 'class="fun-card"' : ''} style="background: #142519; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 8px;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div style="font-size: 13px; font-weight: 700; color: #8fa898;">Q ${S.qIndex + 1} / ${questions.length || 50}</div>
         <div style="font-size: 16px; font-weight: 900; color: ${timerColor(d.timeLeft)};">⏱&#xFE0E; <span id="timeLeft">${d.timeLeft}</span>s</div>
       </div>
       <div class="q-font" style="font-size: 16px; font-weight: 700; line-height: 1.4;">${esc(d.q.q)}</div>
-      <div style="font-size: 13px; font-weight: 700; color: #4fc06a;">✓ Correct: ${d.correctLetter} — ${esc(d.q.a[d.q.correct])}</div>
+      ${d.q.fun
+        ? '<div style="font-size: 13px; font-weight: 800; color: #4fc06a;">🎉&#xFE0E; Fun question — all answers are correct, no points counted</div>'
+        : `<div style="font-size: 13px; font-weight: 700; color: #4fc06a;">✓ Correct: ${d.correctLetter} — ${esc(d.q.a[d.q.correct])}</div>`}
     </div>
     <div style="display: flex; flex-direction: column; gap: 10px;">
       <div style="font-size: 13px; font-weight: 700; color: #8fa898; text-transform: uppercase; letter-spacing: 1px;">Enter each team's paddle</div>
@@ -535,7 +550,7 @@ setInterval(() => {
   if (ring) ring.style.background = timerRing(d.timerPct);
 }, 300);
 
-fetch('./questions.json').then(r => r.json()).then(d => { questions = d.questions; render(); });
+fetch('./questions.json').then(r => r.json()).then(d => { baseQuestions = d.questions; funQuestions = d.fun || []; render(); });
 render();
 </script>
 </body>

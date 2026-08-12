@@ -1,504 +1,566 @@
 {
-    "questions":  [
-                      {
-                          "q":  "A planner wants children to walk safely from their homes to school. Which improvement would help most?",
-                          "a":  [
-                                    "More roadside parking",
-                                    "Continuous footpaths with safe crossings",
-                                    "Wider vehicle lanes",
-                                    "Fewer streetlights"
-                                ],
-                          "correct":  1
-                      },
-                      {
-                          "q":  "What does \"land use\" describe?",
-                          "a":  [
-                                    "How high the tide reaches",
-                                    "The type of soil on an island",
-                                    "How different areas of land are used",
-                                    "How much rain falls"
-                                ],
-                          "correct":  2
-                      },
-                      {
-                          "q":  "A neighbourhood contains homes, shops, offices, and cafés within walking distance. What type of planning is this?",
-                          "a":  [
-                                    "Mixed-use development",
-                                    "Industrial development",
-                                    "Airport zoning",
-                                    "Coastal defence"
-                                ],
-                          "correct":  0
-                      },
-                      {
-                          "q":  "Why might planners avoid placing a school beside a busy industrial area?",
-                          "a":  [
-                                    "Schools need taller buildings",
-                                    "Industrial areas always flood",
-                                    "Children cannot walk near factories",
-                                    "Noise, pollution, and heavy traffic could affect students"
-                                ],
-                          "correct":  3
-                      },
-                      {
-                          "q":  "What is one advantage of having shops and services close to homes?",
-                          "a":  [
-                                    "People need longer journeys",
-                                    "People are able to walk or cycle for more trips",
-                                    "Roads need more parking",
-                                    "Buildings use more electricity"
-                                ],
-                          "correct":  1
-                      },
-                      {
-                          "q":  "A street is comfortable for cars but difficult for children, older people, and wheelchair users. What planning principle is missing?",
-                          "a":  [
-                                    "Accessibility",
-                                    "Recycling",
-                                    "Desalination",
-                                    "Coastal protection"
-                                ],
-                          "correct":  0
-                      },
-                      {
-                          "q":  "Which change would make a residential street safer without completely banning vehicles?",
-                          "a":  [
-                                    "Remove pedestrian crossings",
-                                    "Increase the speed limit",
-                                    "Add traffic-calming measures",
-                                    "Remove street lighting"
-                                ],
-                          "correct":  2
-                      },
-                      {
-                          "q":  "Why might a planner collect information about how many people walk, cycle, drive, or take buses?",
-                          "a":  [
-                                    "To measure rainfall",
-                                    "To estimate sea level",
-                                    "To count buildings",
-                                    "To understand how people travel"
-                                ],
-                          "correct":  3
-                      },
-                      {
-                          "q":  "A playground is surrounded by roads with no safe crossings. What should planners consider first?",
-                          "a":  [
-                                    "Improving safe pedestrian access",
-                                    "Adding more parking spaces",
-                                    "Increasing road speed",
-                                    "Making the playground smaller"
-                                ],
-                          "correct":  0
-                      },
-                      {
-                          "q":  "Why is public consultation useful before redesigning a neighbourhood?",
-                          "a":  [
-                                    "Residents make all technical decisions",
-                                    "Planners learn how people use the area and what problems they face",
-                                    "It removes the need for engineers",
-                                    "It guarantees everyone will agree"
-                                ],
-                          "correct":  1
-                      },
-                      {
-                          "q":  "During heavy rain, water remains on a road for several hours. Which issue is most likely?",
-                          "a":  [
-                                    "Too many streetlights",
-                                    "Too many trees",
-                                    "Poor stormwater drainage",
-                                    "Too many pedestrians"
-                                ],
-                          "correct":  2
-                      },
-                      {
-                          "q":  "Which surface produces the most stormwater runoff during rain?",
-                          "a":  [
-                                    "Grass",
-                                    "Soil",
-                                    "A planted garden",
-                                    "Concrete"
-                                ],
-                          "correct":  3
-                      },
-                      {
-                          "q":  "Why do permeable surfaces help reduce flooding?",
-                          "a":  [
-                                    "They allow some water to soak into the ground",
-                                    "They stop rain from falling",
-                                    "They push water toward buildings",
-                                    "They increase vehicle speed"
-                                ],
-                          "correct":  0
-                      },
-                      {
-                          "q":  "What is one risk of throwing rubbish into storm drains?",
-                          "a":  [
-                                    "Lower sea levels",
-                                    "Blocked drainage and increased flooding",
-                                    "Faster groundwater recharge",
-                                    "Cleaner lagoons"
-                                ],
-                          "correct":  1
-                      },
-                      {
-                          "q":  "Why is groundwater on small islands vulnerable to pollution?",
-                          "a":  [
-                                    "Groundwater is stored in mountains",
-                                    "It sits hundreds of metres underground",
-                                    "Pollutants from the surface can reach the shallow freshwater lens",
-                                    "Groundwater only forms during storms"
-                                ],
-                          "correct":  2
-                      },
-                      {
-                          "q":  "What is saltwater intrusion?",
-                          "a":  [
-                                    "Rainwater entering a tank",
-                                    "Freshwater flowing into the lagoon",
-                                    "Seawater entering a swimming pool",
-                                    "Seawater moving into freshwater underground"
-                                ],
-                          "correct":  3
-                      },
-                      {
-                          "q":  "Which combination gives an island a more resilient freshwater system?",
-                          "a":  [
-                                    "Rainwater collection, groundwater protection, and desalination",
-                                    "Bottled water alone",
-                                    "Groundwater alone",
-                                    "Seawater stored in tanks"
-                                ],
-                          "correct":  0
-                      },
-                      {
-                          "q":  "Why should new developments include drainage planning before construction?",
-                          "a":  [
-                                    "Drainage changes building colours",
-                                    "Buildings and roads change how rainwater flows",
-                                    "Drainage determines mobile coverage",
-                                    "Drainage increases tides"
-                                ],
-                          "correct":  1
-                      },
-                      {
-                          "q":  "A low area regularly floods after rain. Which solution is most appropriate to investigate?",
-                          "a":  [
-                                    "More advertising signs",
-                                    "More parking",
-                                    "Better drainage and water-storage areas",
-                                    "Taller streetlights"
-                                ],
-                          "correct":  2
-                      },
-                      {
-                          "q":  "Why does climate-resilient planning matter in Maldives?",
-                          "a":  [
-                                    "Islands experience earthquakes every month",
-                                    "Roads must withstand snow",
-                                    "Buildings need heating systems",
-                                    "Low-lying islands face risks from flooding, erosion, heat, and sea-level rise"
-                                ],
-                          "correct":  3
-                      },
-                      {
-                          "q":  "What is coastal erosion?",
-                          "a":  [
-                                    "The gradual loss or movement of coastal sand and land",
-                                    "Coral growing near a beach",
-                                    "Rain filling a lagoon",
-                                    "Seagrass growing underwater"
-                                ],
-                          "correct":  0
-                      },
-                      {
-                          "q":  "Why might removing large amounts of beach sand cause problems?",
-                          "a":  [
-                                    "It makes rainfall heavier",
-                                    "It can change the beach and increase erosion",
-                                    "It increases coral growth",
-                                    "It lowers air temperature"
-                                ],
-                          "correct":  1
-                      },
-                      {
-                          "q":  "Coral reefs help Maldivian islands in several ways. Which is one important function?",
-                          "a":  [
-                                    "Producing drinking water",
-                                    "Generating electricity",
-                                    "Reducing some wave energy before it reaches the coast",
-                                    "Preventing rainfall"
-                                ],
-                          "correct":  2
-                      },
-                      {
-                          "q":  "Why should boats use designated moorings near coral reefs?",
-                          "a":  [
-                                    "Moorings increase fishing",
-                                    "Moorings make boats faster",
-                                    "Moorings deepen lagoons",
-                                    "They reduce damage caused by anchors landing on coral"
-                                ],
-                          "correct":  3
-                      },
-                      {
-                          "q":  "What does biodiversity describe?",
-                          "a":  [
-                                    "The variety of plants, animals, and other living organisms",
-                                    "The number of roads on an island",
-                                    "The height of buildings",
-                                    "The amount of rainfall"
-                                ],
-                          "correct":  0
-                      },
-                      {
-                          "q":  "Why might planners protect a wetland rather than fill it for construction?",
-                          "a":  [
-                                    "Wetlands make roads faster",
-                                    "Wetlands can provide habitat and store water",
-                                    "Wetlands create plastic",
-                                    "Wetlands stop all coastal erosion"
-                                ],
-                          "correct":  1
-                      },
-                      {
-                          "q":  "Which activity is most likely to damage a coral reef directly?",
-                          "a":  [
-                                    "Walking on a footpath",
-                                    "Collecting rainwater",
-                                    "Dropping anchors onto living coral",
-                                    "Riding a bicycle"
-                                ],
-                          "correct":  2
-                      },
-                      {
-                          "q":  "What is an ecosystem service?",
-                          "a":  [
-                                    "A service provided by a construction company",
-                                    "A waste collection fee",
-                                    "A government office",
-                                    "A benefit people receive from healthy natural systems"
-                                ],
-                          "correct":  3
-                      },
-                      {
-                          "q":  "Mangroves and wetlands can help an island by:",
-                          "a":  [
-                                    "Providing wildlife habitat and helping manage water",
-                                    "Producing petrol",
-                                    "Increasing traffic",
-                                    "Replacing desalination plants"
-                                ],
-                          "correct":  0
-                      },
-                      {
-                          "q":  "A developer proposes filling an environmentally important wetland. What should happen before a decision is made?",
-                          "a":  [
-                                    "Construction should begin immediately",
-                                    "Environmental impacts and alternatives should be assessed",
-                                    "All vegetation should be removed",
-                                    "The area should become a car park"
-                                ],
-                          "correct":  1
-                      },
-                      {
-                          "q":  "Which action is highest in the waste hierarchy?",
-                          "a":  [
-                                    "Recycling",
-                                    "Disposal",
-                                    "Preventing waste from being created",
-                                    "Burning waste"
-                                ],
-                          "correct":  2
-                      },
-                      {
-                          "q":  "What is source segregation?",
-                          "a":  [
-                                    "Moving waste to another island",
-                                    "Burning rubbish at home",
-                                    "Mixing all waste together",
-                                    "Separating different types of waste where they are produced"
-                                ],
-                          "correct":  3
-                      },
-                      {
-                          "q":  "Which choice creates the least waste?",
-                          "a":  [
-                                    "Refilling a reusable water bottle",
-                                    "Buying several small disposable bottles",
-                                    "Using a new plastic cup each time",
-                                    "Throwing away a bottle after one sip"
-                                ],
-                          "correct":  0
-                      },
-                      {
-                          "q":  "Why should batteries be kept separate from ordinary household waste?",
-                          "a":  [
-                                    "Batteries are compostable",
-                                    "They contain materials that need special handling",
-                                    "Batteries dissolve safely in seawater",
-                                    "They improve soil quality"
-                                ],
-                          "correct":  1
-                      },
-                      {
-                          "q":  "Which material is most suitable for composting?",
-                          "a":  [
-                                    "Aluminium cans",
-                                    "Glass",
-                                    "Fruit and vegetable scraps",
-                                    "Batteries"
-                                ],
-                          "correct":  2
-                      },
-                      {
-                          "q":  "What is the main idea of a circular economy?",
-                          "a":  [
-                                    "Build circular roads",
-                                    "Transport waste in circles",
-                                    "Replace products faster",
-                                    "Keep materials and products in use for as long as practical"
-                                ],
-                          "correct":  3
-                      },
-                      {
-                          "q":  "Why does separating food waste from other rubbish help?",
-                          "a":  [
-                                    "Food waste can be treated through options such as composting",
-                                    "It increases plastic production",
-                                    "It makes batteries recyclable",
-                                    "It stops rainfall"
-                                ],
-                          "correct":  0
-                      },
-                      {
-                          "q":  "A café changes from disposable cups to washable cups. Which waste strategy is this closest to?",
-                          "a":  [
-                                    "Disposal",
-                                    "Reuse",
-                                    "Landfilling",
-                                    "Incineration"
-                                ],
-                          "correct":  1
-                      },
-                      {
-                          "q":  "Why is dumping waste near the shoreline risky?",
-                          "a":  [
-                                    "Waste improves coral growth",
-                                    "Waste strengthens beaches",
-                                    "Wind and water can carry pollution into the ocean",
-                                    "Waste produces freshwater"
-                                ],
-                          "correct":  2
-                      },
-                      {
-                          "q":  "Which situation best represents responsible waste management?",
-                          "a":  [
-                                    "Mixing batteries, food, glass, and plastic",
-                                    "Burning rubbish beside homes",
-                                    "Throwing rubbish into drains",
-                                    "Reducing waste and separating materials for appropriate treatment"
-                                ],
-                          "correct":  3
-                      },
-                      {
-                          "q":  "Why might a heavily paved neighbourhood feel hotter than a shaded green area?",
-                          "a":  [
-                                    "Buildings and paved surfaces absorb and release heat",
-                                    "Trees produce extra heat",
-                                    "Grass creates hot air",
-                                    "Shade increases sunlight"
-                                ],
-                          "correct":  0
-                      },
-                      {
-                          "q":  "What is the \"urban heat island\" effect?",
-                          "a":  [
-                                    "An island created by volcanic heat",
-                                    "Built-up areas becoming warmer than greener surrounding areas",
-                                    "Heat produced by coral reefs",
-                                    "Warm water inside rain tanks"
-                                ],
-                          "correct":  1
-                      },
-                      {
-                          "q":  "Which street design would give pedestrians the best protection from midday heat?",
-                          "a":  [
-                                    "Wider asphalt roads",
-                                    "More parking",
-                                    "Shaded footpaths with suitable trees or structures",
-                                    "Fewer buildings"
-                                ],
-                          "correct":  2
-                      },
-                      {
-                          "q":  "Why should planners think carefully about where large trees are planted?",
-                          "a":  [
-                                    "Trees should always be placed in the middle of roads",
-                                    "Tree roots never grow",
-                                    "Every tree needs the same amount of space",
-                                    "Roots, branches, utilities, footpaths, and buildings all need enough space"
-                                ],
-                          "correct":  3
-                      },
-                      {
-                          "q":  "A coconut palm grows beside a busy playground. Which maintenance issue deserves special attention?",
-                          "a":  [
-                                    "The risk of falling coconuts and dead fronds",
-                                    "The colour of the trunk",
-                                    "The number of clouds",
-                                    "The direction of traffic"
-                                ],
-                          "correct":  0
-                      },
-                      {
-                          "q":  "What does \"active transport\" mean?",
-                          "a":  [
-                                    "Travelling only during daytime",
-                                    "Ways of travelling using physical activity, such as walking and cycling",
-                                    "Driving quickly",
-                                    "Using aircraft"
-                                ],
-                          "correct":  1
-                      },
-                      {
-                          "q":  "Which change is most likely to reduce the need for short car or motorcycle trips?",
-                          "a":  [
-                                    "Moving shops farther from homes",
-                                    "Removing footpaths",
-                                    "Locating daily services within walking distance",
-                                    "Increasing parking everywhere"
-                                ],
-                          "correct":  2
-                      },
-                      {
-                          "q":  "Why do planners use maps when designing an island?",
-                          "a":  [
-                                    "To decide what music people listen to",
-                                    "To see where homes, roads, parks, services, and environmental areas are located",
-                                    "To predict exam results",
-                                    "To measure how salty food is"
-                                ],
-                          "correct":  1
-                      },
-                      {
-                          "q":  "Planners want to build a new park. Which information would be most useful?",
-                          "a":  [
-                                    "Where people live, pedestrian routes, existing trees, drainage, and nearby facilities",
-                                    "Television viewing habits",
-                                    "Favourite school subjects",
-                                    "Mobile phone brands"
-                                ],
-                          "correct":  0
-                      },
-                      {
-                          "q":  "You are planning a new neighbourhood in Maldives. Which proposal shows the strongest overall planning approach?",
-                          "a":  [
-                                    "Maximise buildings and use remaining land for roads",
-                                    "Combine homes and services with safe walking, drainage, shade, public spaces, waste systems, and environmental protection",
-                                    "Build roads first and consider drainage later",
-                                    "Remove vegetation to simplify construction"
-                                ],
-                          "correct":  1
-                      }
-                  ]
+  "questions": [
+    {
+      "q": "A planner wants children to walk safely from their homes to school. Which improvement would help most?",
+      "a": [
+        "More roadside parking",
+        "Continuous footpaths with safe crossings",
+        "Wider vehicle lanes",
+        "Fewer streetlights"
+      ],
+      "correct": 1
+    },
+    {
+      "q": "What does \"land use\" describe?",
+      "a": [
+        "How high the tide reaches",
+        "The type of soil on an island",
+        "How different areas of land are used",
+        "How much rain falls"
+      ],
+      "correct": 2
+    },
+    {
+      "q": "A neighbourhood contains homes, shops, offices, and cafés within walking distance. What type of planning is this?",
+      "a": [
+        "Mixed-use development",
+        "Industrial development",
+        "Airport zoning",
+        "Coastal defence"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "It rains heavily and suddenly the entire street becomes a swimming pool. What did the planner probably forget?",
+      "a": [
+        "A swimming team",
+        "Drainage",
+        "More traffic lights",
+        "A bigger supermarket"
+      ],
+      "correct": 1
+    },
+    {
+      "q": "Why might planners avoid placing a school beside a busy industrial area?",
+      "a": [
+        "Schools need taller buildings",
+        "Industrial areas always flood",
+        "Children cannot walk near factories",
+        "Noise, pollution, and heavy traffic could affect students"
+      ],
+      "correct": 3
+    },
+    {
+      "q": "What is one advantage of having shops and services close to homes?",
+      "a": [
+        "People need longer journeys",
+        "People are able to walk or cycle for more trips",
+        "Roads need more parking",
+        "Buildings use more electricity"
+      ],
+      "correct": 1
+    },
+    {
+      "q": "A neighbourhood has 200 parking spaces but ZERO trees. What is a planner most likely to hear from residents?",
+      "a": [
+        "“Amazing! More parking!”",
+        "“Why is it so hot?!”",
+        "“Can we have more concrete?”",
+        "“Let's remove the remaining grass too!”"
+      ],
+      "correct": 1
+    },
+    {
+      "q": "A street is comfortable for cars but difficult for children, older people, and wheelchair users. What planning principle is missing?",
+      "a": [
+        "Accessibility",
+        "Recycling",
+        "Desalination",
+        "Coastal protection"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Which change would make a residential street safer without completely banning vehicles?",
+      "a": [
+        "Remove pedestrian crossings",
+        "Increase the speed limit",
+        "Add traffic-calming measures",
+        "Remove street lighting"
+      ],
+      "correct": 2
+    },
+    {
+      "q": "Why might a planner collect information about how many people walk, cycle, drive, or take buses?",
+      "a": [
+        "To measure rainfall",
+        "To estimate sea level",
+        "To count buildings",
+        "To understand how people travel"
+      ],
+      "correct": 3
+    },
+    {
+      "q": "A playground is surrounded by roads with no safe crossings. What should planners consider first?",
+      "a": [
+        "Improving safe pedestrian access",
+        "Adding more parking spaces",
+        "Increasing road speed",
+        "Making the playground smaller"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Why is public consultation useful before redesigning a neighbourhood?",
+      "a": [
+        "Residents make all technical decisions",
+        "Planners learn how people use the area and what problems they face",
+        "It removes the need for engineers",
+        "It guarantees everyone will agree"
+      ],
+      "correct": 1
+    },
+    {
+      "q": "During heavy rain, water remains on a road for several hours. Which issue is most likely?",
+      "a": [
+        "Too many streetlights",
+        "Too many trees",
+        "Poor stormwater drainage",
+        "Too many pedestrians"
+      ],
+      "correct": 2
+    },
+    {
+      "q": "Which surface produces the most stormwater runoff during rain?",
+      "a": [
+        "Grass",
+        "Soil",
+        "A planted garden",
+        "Concrete"
+      ],
+      "correct": 3
+    },
+    {
+      "q": "Why do permeable surfaces help reduce flooding?",
+      "a": [
+        "They allow some water to soak into the ground",
+        "They stop rain from falling",
+        "They push water toward buildings",
+        "They increase vehicle speed"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "What is one risk of throwing rubbish into storm drains?",
+      "a": [
+        "Lower sea levels",
+        "Blocked drainage and increased flooding",
+        "Faster groundwater recharge",
+        "Cleaner lagoons"
+      ],
+      "correct": 1
+    },
+    {
+      "q": "Why is groundwater on small islands vulnerable to pollution?",
+      "a": [
+        "Groundwater is stored in mountains",
+        "It sits hundreds of metres underground",
+        "Pollutants from the surface can reach the shallow freshwater lens",
+        "Groundwater only forms during storms"
+      ],
+      "correct": 2
+    },
+    {
+      "q": "What is saltwater intrusion?",
+      "a": [
+        "Rainwater entering a tank",
+        "Freshwater flowing into the lagoon",
+        "Seawater entering a swimming pool",
+        "Seawater moving into freshwater underground"
+      ],
+      "correct": 3
+    },
+    {
+      "q": "Which combination gives an island a more resilient freshwater system?",
+      "a": [
+        "Rainwater collection, groundwater protection, and desalination",
+        "Bottled water alone",
+        "Groundwater alone",
+        "Seawater stored in tanks"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Why should new developments include drainage planning before construction?",
+      "a": [
+        "Drainage changes building colours",
+        "Buildings and roads change how rainwater flows",
+        "Drainage determines mobile coverage",
+        "Drainage increases tides"
+      ],
+      "correct": 1
+    },
+    {
+      "q": "A low area regularly floods after rain. Which solution is most appropriate to investigate?",
+      "a": [
+        "More advertising signs",
+        "More parking",
+        "Better drainage and water-storage areas",
+        "Taller streetlights"
+      ],
+      "correct": 2
+    },
+    {
+      "q": "Why does climate-resilient planning matter in Maldives?",
+      "a": [
+        "Islands experience earthquakes every month",
+        "Roads must withstand snow",
+        "Buildings need heating systems",
+        "Low-lying islands face risks from flooding, erosion, heat, and sea-level rise"
+      ],
+      "correct": 3
+    },
+    {
+      "q": "What is coastal erosion?",
+      "a": [
+        "The gradual loss or movement of coastal sand and land",
+        "Coral growing near a beach",
+        "Rain filling a lagoon",
+        "Seagrass growing underwater"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Why might removing large amounts of beach sand cause problems?",
+      "a": [
+        "It makes rainfall heavier",
+        "It can change the beach and increase erosion",
+        "It increases coral growth",
+        "It lowers air temperature"
+      ],
+      "correct": 1
+    },
+    {
+      "q": "Coral reefs help Maldivian islands in several ways. Which is one important function?",
+      "a": [
+        "Producing drinking water",
+        "Generating electricity",
+        "Reducing some wave energy before it reaches the coast",
+        "Preventing rainfall"
+      ],
+      "correct": 2
+    },
+    {
+      "q": "Why should boats use designated moorings near coral reefs?",
+      "a": [
+        "Moorings increase fishing",
+        "Moorings make boats faster",
+        "Moorings deepen lagoons",
+        "They reduce damage caused by anchors landing on coral"
+      ],
+      "correct": 3
+    },
+    {
+      "q": "What does biodiversity describe?",
+      "a": [
+        "The variety of plants, animals, and other living organisms",
+        "The number of roads on an island",
+        "The height of buildings",
+        "The amount of rainfall"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Why might planners protect a wetland rather than fill it for construction?",
+      "a": [
+        "Wetlands make roads faster",
+        "Wetlands can provide habitat and store water",
+        "Wetlands create plastic",
+        "Wetlands stop all coastal erosion"
+      ],
+      "correct": 1
+    },
+    {
+      "q": "Which activity is most likely to damage a coral reef directly?",
+      "a": [
+        "Walking on a footpath",
+        "Collecting rainwater",
+        "Dropping anchors onto living coral",
+        "Riding a bicycle"
+      ],
+      "correct": 2
+    },
+    {
+      "q": "What is an ecosystem service?",
+      "a": [
+        "A service provided by a construction company",
+        "A waste collection fee",
+        "A government office",
+        "A benefit people receive from healthy natural systems"
+      ],
+      "correct": 3
+    },
+    {
+      "q": "Mangroves and wetlands can help an island by:",
+      "a": [
+        "Providing wildlife habitat and helping manage water",
+        "Producing petrol",
+        "Increasing traffic",
+        "Replacing desalination plants"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "A developer proposes filling an environmentally important wetland. What should happen before a decision is made?",
+      "a": [
+        "Construction should begin immediately",
+        "Environmental impacts and alternatives should be assessed",
+        "All vegetation should be removed",
+        "The area should become a car park"
+      ],
+      "correct": 1
+    },
+    {
+      "q": "Which action is highest in the waste hierarchy?",
+      "a": [
+        "Recycling",
+        "Disposal",
+        "Preventing waste from being created",
+        "Burning waste"
+      ],
+      "correct": 2
+    },
+    {
+      "q": "What is source segregation?",
+      "a": [
+        "Moving waste to another island",
+        "Burning rubbish at home",
+        "Mixing all waste together",
+        "Separating different types of waste where they are produced"
+      ],
+      "correct": 3
+    },
+    {
+      "q": "Which choice creates the least waste?",
+      "a": [
+        "Refilling a reusable water bottle",
+        "Buying several small disposable bottles",
+        "Using a new plastic cup each time",
+        "Throwing away a bottle after one sip"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Why should batteries be kept separate from ordinary household waste?",
+      "a": [
+        "Batteries are compostable",
+        "They contain materials that need special handling",
+        "Batteries dissolve safely in seawater",
+        "They improve soil quality"
+      ],
+      "correct": 1
+    },
+    {
+      "q": "Which material is most suitable for composting?",
+      "a": [
+        "Aluminium cans",
+        "Glass",
+        "Fruit and vegetable scraps",
+        "Batteries"
+      ],
+      "correct": 2
+    },
+    {
+      "q": "What is the main idea of a circular economy?",
+      "a": [
+        "Build circular roads",
+        "Transport waste in circles",
+        "Replace products faster",
+        "Keep materials and products in use for as long as practical"
+      ],
+      "correct": 3
+    },
+    {
+      "q": "Why does separating food waste from other rubbish help?",
+      "a": [
+        "Food waste can be treated through options such as composting",
+        "It increases plastic production",
+        "It makes batteries recyclable",
+        "It stops rainfall"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "A café changes from disposable cups to washable cups. Which waste strategy is this closest to?",
+      "a": [
+        "Disposal",
+        "Reuse",
+        "Landfilling",
+        "Incineration"
+      ],
+      "correct": 1
+    },
+    {
+      "q": "Why is dumping waste near the shoreline risky?",
+      "a": [
+        "Waste improves coral growth",
+        "Waste strengthens beaches",
+        "Wind and water can carry pollution into the ocean",
+        "Waste produces freshwater"
+      ],
+      "correct": 2
+    },
+    {
+      "q": "Which situation best represents responsible waste management?",
+      "a": [
+        "Mixing batteries, food, glass, and plastic",
+        "Burning rubbish beside homes",
+        "Throwing rubbish into drains",
+        "Reducing waste and separating materials for appropriate treatment"
+      ],
+      "correct": 3
+    },
+    {
+      "q": "Why might a heavily paved neighbourhood feel hotter than a shaded green area?",
+      "a": [
+        "Buildings and paved surfaces absorb and release heat",
+        "Trees produce extra heat",
+        "Grass creates hot air",
+        "Shade increases sunlight"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "What is the \"urban heat island\" effect?",
+      "a": [
+        "An island created by volcanic heat",
+        "Built-up areas becoming warmer than greener surrounding areas",
+        "Heat produced by coral reefs",
+        "Warm water inside rain tanks"
+      ],
+      "correct": 1
+    },
+    {
+      "q": "Which street design would give pedestrians the best protection from midday heat?",
+      "a": [
+        "Wider asphalt roads",
+        "More parking",
+        "Shaded footpaths with suitable trees or structures",
+        "Fewer buildings"
+      ],
+      "correct": 2
+    },
+    {
+      "q": "Why should planners think carefully about where large trees are planted?",
+      "a": [
+        "Trees should always be placed in the middle of roads",
+        "Tree roots never grow",
+        "Every tree needs the same amount of space",
+        "Roots, branches, utilities, footpaths, and buildings all need enough space"
+      ],
+      "correct": 3
+    },
+    {
+      "q": "A coconut palm grows beside a busy playground. Which maintenance issue deserves special attention?",
+      "a": [
+        "The risk of falling coconuts and dead fronds",
+        "The colour of the trunk",
+        "The number of clouds",
+        "The direction of traffic"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "What does \"active transport\" mean?",
+      "a": [
+        "Travelling only during daytime",
+        "Ways of travelling using physical activity, such as walking and cycling",
+        "Driving quickly",
+        "Using aircraft"
+      ],
+      "correct": 1
+    },
+    {
+      "q": "Which change is most likely to reduce the need for short car or motorcycle trips?",
+      "a": [
+        "Moving shops farther from homes",
+        "Removing footpaths",
+        "Locating daily services within walking distance",
+        "Increasing parking everywhere"
+      ],
+      "correct": 2
+    },
+    {
+      "q": "Why do planners use maps when designing an island?",
+      "a": [
+        "To decide what music people listen to",
+        "To see where homes, roads, parks, services, and environmental areas are located",
+        "To predict exam results",
+        "To measure how salty food is"
+      ],
+      "correct": 1
+    },
+    {
+      "q": "Planners want to build a new park. Which information would be most useful?",
+      "a": [
+        "Where people live, pedestrian routes, existing trees, drainage, and nearby facilities",
+        "Television viewing habits",
+        "Favourite school subjects",
+        "Mobile phone brands"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "You are planning a new neighbourhood in Maldives. Which proposal shows the strongest overall planning approach?",
+      "a": [
+        "Maximise buildings and use remaining land for roads",
+        "Combine homes and services with safe walking, drainage, shade, public spaces, waste systems, and environmental protection",
+        "Build roads first and consider drainage later",
+        "Remove vegetation to simplify construction"
+      ],
+      "correct": 1
+    }
+  ],
+  "fun": [
+    {
+      "q": "You get unlimited money to create ONE public space for teenagers. What do you build?",
+      "a": [
+        "Skate/bike park 🛹",
+        "Sports complex ⚽",
+        "Gaming + hangout centre 🎮",
+        "Outdoor adventure park 🌴"
+      ],
+      "fun": true
+    },
+    {
+      "q": "If you could give an urban planner ONE superpower, what would you choose?",
+      "a": [
+        "Make traffic disappear",
+        "Make every building climate-proof",
+        "Instantly create parks",
+        "Make everyone walk or cycle"
+      ],
+      "fun": true
+    },
+    {
+      "q": "What is more important in a city?",
+      "a": [
+        "Beautiful buildings",
+        "Comfortable public spaces",
+        "Easy transportation",
+        "Affordable housing"
+      ],
+      "fun": true
+    },
+    {
+      "q": "You have one tiny piece of land left in a crowded neighbourhood. What would YOU rather put there?",
+      "a": [
+        "A park 🌳",
+        "A playground ⚽",
+        "A café ☕",
+        "More parking 🚗"
+      ],
+      "fun": true
+    }
+  ]
 }
